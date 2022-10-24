@@ -47,6 +47,8 @@ func Action(c *cli.Context) error {
 	}
 	log.G(ctx).Info("prepared delta image")
 
+	// Create Container
+
 	return nil
 }
 

@@ -262,7 +262,8 @@ func (c *Convertor) ToStarlightImage() (err error) {
 		return err
 	}
 
-	retIdx = mutate.AppendManifests(empty.Index)
+	retIdx = mutate.IndexMediaType(empty.Index, types.OCIImageIndex)
+
 	var idxAddendumMux sync.Mutex
 	var idxErrGrp errgroup.Group
 
@@ -354,7 +355,6 @@ func (c *Convertor) ToStarlightImage() (err error) {
 
 			idxAddendumMux.Lock()
 			defer idxAddendumMux.Unlock()
-
 			retIdx = mutate.AppendManifests(retIdx, mutate.IndexAddendum{
 				Add: slImg,
 				Descriptor: goreg.Descriptor{
