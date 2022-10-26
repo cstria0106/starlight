@@ -8,10 +8,10 @@ package auth
 import "github.com/urfave/cli/v2"
 
 var (
-	Flags = []cli.Flag{
+	StarlightProxyFlags = []cli.Flag{
 		&cli.StringFlag{
 			Name:     "server",
-			Aliases:  []string{"starlight-proxy"},
+			Aliases:  []string{"starlight-proxy", "proxy"},
 			Value:    "starlight.yuri.moe", // public starlight proxy server - for testing only
 			Usage:    "the starlight proxy address, report the converted image to the Starlight proxy server",
 			Required: false,
@@ -23,7 +23,6 @@ var (
 			Usage:    "use plain http connects to the remote server",
 			Required: false,
 		},
-
 		&cli.StringFlag{
 			Name:    "username",
 			Aliases: []string{"u"},

@@ -21,14 +21,12 @@ package convert
 import (
 	"context"
 	"errors"
-	"github.com/google/go-containerregistry/pkg/authn"
-	"github.com/google/go-containerregistry/pkg/v1/remote"
-	"github.com/mc256/starlight/cmd/ctr-starlight/notify"
-	"github.com/mc256/starlight/cmd/ctr-starlight/report"
-
 	"github.com/containerd/containerd/log"
 	"github.com/containerd/containerd/namespaces"
+	"github.com/google/go-containerregistry/pkg/authn"
 	"github.com/google/go-containerregistry/pkg/name"
+	"github.com/google/go-containerregistry/pkg/v1/remote"
+	"github.com/mc256/starlight/cmd/ctr-starlight/notify"
 	"github.com/mc256/starlight/proxy"
 	"github.com/mc256/starlight/util"
 	"github.com/urfave/cli/v2"
@@ -48,7 +46,6 @@ func Action(ctx context.Context, c *cli.Context) error {
 
 	// logger
 	ns := c.String("namespace")
-	util.ConfigLoggerWithLevel(c.String("log-level"))
 	ctx = namespaces.WithNamespace(ctx, ns)
 
 	// source
@@ -92,21 +89,20 @@ func Action(ctx context.Context, c *cli.Context) error {
 }
 
 func Command() *cli.Command {
-	ctx := context.Background()
 	cmd := cli.Command{
 		Name:  "convert",
 		Usage: "Convert typical container image (in .tar.gz or .tar format) to Starlight image format",
 		Action: func(c *cli.Context) error {
+			level := c.String("log-level")
+			ctx := util.ConfigLoggerWithLevel(level)
 			return Action(ctx, c)
 		},
 		Flags: append(
-
 			// Convert Flags
 			Flags,
-
 			// Report Flags
 			append(
-				report.Flags,
+				notify.Flags,
 				&cli.BoolFlag{
 					Name:     "notify",
 					Usage:    "notify the converted image to the Starlight Proxy",

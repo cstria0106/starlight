@@ -11,6 +11,7 @@ import (
 	"github.com/containerd/containerd/log"
 	"github.com/google/go-containerregistry/pkg/name"
 	"github.com/mc256/starlight/grpc"
+	"github.com/mc256/starlight/util"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 )
@@ -65,11 +66,12 @@ func SharedAction(ctx context.Context, c *cli.Context, reference name.Reference)
 }
 
 func Command() *cli.Command {
-	ctx := context.Background()
 	cmd := cli.Command{
 		Name:  "notify",
 		Usage: "Notify the Starlight Proxy that a new Starlight image is available",
 		Action: func(c *cli.Context) error {
+			level := c.String("log-level")
+			ctx := util.ConfigLoggerWithLevel(level)
 			return Action(ctx, c)
 		},
 		Flags: append(
