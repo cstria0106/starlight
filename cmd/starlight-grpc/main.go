@@ -21,7 +21,6 @@ package main
 import (
 	"fmt"
 	"github.com/containerd/containerd/log"
-	"github.com/mc256/starlight/grpc"
 	"github.com/mc256/starlight/util"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
@@ -44,7 +43,7 @@ func main() {
 
 func New() *cli.App {
 	app := cli.NewApp()
-	cfg := grpc.NewConfig()
+	cfg := client.NewConfig()
 
 	app.Name = "starlight-grpc"
 	app.Version = util.Version
@@ -123,7 +122,7 @@ https://github.com/mc256/starlight
 	return app
 }
 
-func DefaultAction(context *cli.Context, cfg *grpc.Configuration) (err error) {
+func DefaultAction(context *cli.Context, cfg *client.Configuration) (err error) {
 
 	var (
 		p  string
@@ -131,7 +130,7 @@ func DefaultAction(context *cli.Context, cfg *grpc.Configuration) (err error) {
 	)
 
 	config := context.String("config")
-	cfg, p, ne, err = grpc.LoadConfig(config)
+	cfg, p, ne, err = client.LoadConfig(config)
 
 	if l := context.String("log-level"); l != "" {
 		cfg.LogLevel = l
@@ -176,7 +175,7 @@ func DefaultAction(context *cli.Context, cfg *grpc.Configuration) (err error) {
 	parr := context.StringSlice("proxy")
 	if len(parr) != 0 {
 		for _, v := range parr {
-			if k, vv, err := grpc.ParseProxyStrings(v); err != nil {
+			if k, vv, err := client.ParseProxyStrings(v); err != nil {
 				log.G(c).
 					WithError(err).
 					Error("failed to parse proxy flag")
@@ -186,7 +185,7 @@ func DefaultAction(context *cli.Context, cfg *grpc.Configuration) (err error) {
 		}
 	}
 
-	grpc.NewSnapshotterGrpcService(c, cfg)
+	client.NewSnapshotterGrpcService(c, cfg)
 
 	return nil
 }

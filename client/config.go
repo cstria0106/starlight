@@ -1,4 +1,4 @@
-package grpc
+package client
 
 import (
 	"encoding/json"
@@ -29,7 +29,8 @@ type Configuration struct {
 	Metadata string `json:"metadata"`
 
 	// socket address
-	Socket string `json:"socket"`
+	Socket     string `json:"socket"`
+	Containerd string `json:"containerd"`
 
 	// registry + proxy
 	DefaultProxy   string `json:"default_proxy"`
@@ -121,6 +122,7 @@ func NewConfig() *Configuration {
 		LogLevel:       "debug",
 		Metadata:       "/var/lib/starlight-grpc/metadata.db",
 		Socket:         "/run/starlight-grpc/starlight-snapshotter.socket",
+		Containerd:     "/run/containerd/containerd.sock",
 		DefaultProxy:   "starlight-shared",
 		FileSystemRoot: "/var/lib/starlight-grpc",
 		ClientId:       uuid.New().String(),
