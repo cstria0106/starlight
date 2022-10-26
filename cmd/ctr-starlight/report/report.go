@@ -72,7 +72,7 @@ func Action(ctx context.Context, c *cli.Context) (err error) {
 
 func Command() *cli.Command {
 	ctx := context.Background()
-	cmd := cli.Command{
+	return &cli.Command{
 		Name:  "report",
 		Usage: "Upload data collected by the optimizer back to Starlight Proxy to speed up other similar deployment",
 		Action: func(c *cli.Context) error {
@@ -81,5 +81,4 @@ func Command() *cli.Command {
 		Flags:     Flags,
 		ArgsUsage: "",
 	}
-	return &cmd
 }
