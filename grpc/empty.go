@@ -205,6 +205,19 @@ func (s *emptySnapshotter) Prepare(ctx context.Context, key, parent string, opts
 		WithField("key", key).
 		WithField("parent", parent).
 		Info("prepare")
+	var info snapshots.Info
+	for _, opt := range opts {
+		err := opt(&info)
+		if err != nil {
+			return nil, err
+		}
+	}
+	log.G(ctx).
+		WithField("key", key).
+		WithField("parent", parent).
+		WithField("labels", info.Labels).
+		Info("prepare")
+
 	if parent == "" {
 		in := NewEmptyInstance(nil, key)
 		s.buffer[key] = in

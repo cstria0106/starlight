@@ -20,6 +20,7 @@ package grpc
 
 import (
 	"context"
+	"github.com/containerd/containerd/api/services/content/v1"
 	snapshotsapi "github.com/containerd/containerd/api/services/snapshots/v1"
 	"github.com/containerd/containerd/contrib/snapshotservice"
 	"github.com/containerd/containerd/log"
@@ -39,7 +40,8 @@ func NewSnapshotterGrpcService(ctx context.Context, cfg *Configuration) {
 	// snapshotter and a root directory. Your custom snapshotter will be
 	// much more useful than using a snapshotter which is already included.
 	// https://godoc.org/github.com/containerd/containerd/snapshots#Snapshotter
-	sn, err := NewSnapshotter(ctx, cfg)
+	//sn, err := NewSnapshotter(ctx, cfg)
+	sn, err := NewEmptySnapshotter(ctx, cfg)
 	if err != nil {
 		log.G(ctx).WithError(err).Fatal("failed to create new snapshotter")
 		os.Exit(1)
@@ -48,6 +50,7 @@ func NewSnapshotterGrpcService(ctx context.Context, cfg *Configuration) {
 	// Convert the snapshotter to a gRPC service,
 	// example in github.com/containerd/containerd/contrib/snapshotservice
 	service := snapshotservice.FromSnapshotter(sn)
+	content.RegisterContentServer(rpc, NewEmptyContent())
 
 	// Prepare the directory for the socket
 	if err := os.MkdirAll(filepath.Dir(cfg.Socket), 0700); err != nil {
