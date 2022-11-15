@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: starlight-proxy
+spec:
+  selector:
+    matchLabels:
+      app: starlight-proxy
+  template:
+    metadata:
+      labels:
+        app: starlight-proxy
+    spec:
+      volumes:
+        - name: starlight-pv
+          persistentVolumeClaim:
+            claimName: starlight-pvc
+      containers:
+      - name: starlight-proxy
+        image: ghcr.io/mc256/starlight/proxy:latest
+        command: ["/opt/starlight-proxy"]
+        args:
+         - --registry
+         - http://localhost:5000
+         - --log-level
+         - info
+         - --postgres
+         - postgres://postgres:postgres@127.0.0.1:5432/postgres?sslmode=disable
+         - --port
+         - "8090"
+        ports:
+        - containerPort: 8090
+        resources:
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+--- 
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: starlight-metadata
+spec:
+  selector:
+    matchLabels:
+      app: starlight-metadata
+  template:
+    metadata:
+      labels:
+        app: starlight-metadata
+    spec:
+      containers:
+      - name: starlight-metadata
+        image: postgres:13.2
+        
+        ports:
+        - containerPort: 5432
+        resources:
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
