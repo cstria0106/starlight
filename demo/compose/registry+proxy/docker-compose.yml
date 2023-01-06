@@ -2,6 +2,9 @@ version: "3"
 services:
   starlightproxy:
     image: ghcr.io/mc256/starlight/proxy:latest
+    build:
+      context: ../../..
+      dockerfile: Dockerfile
     container_name: starlightproxy
     ports:
       - 8090:8090
