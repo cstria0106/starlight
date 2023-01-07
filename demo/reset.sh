@@ -27,5 +27,5 @@ rm -rf /tmp/test-redis-data
 
 
 # Restart the service
-./out/starlight-grpc  run --server=10.0.2.2:8090 --plain-http --log-level=debug &
+./out/starlight-grpc  run --server=10.0.2.2:8090 --insecure --log-level=debug &
 containerd &

@@ -21,12 +21,13 @@ package proxy
 import (
 	"context"
 	"encoding/json"
+	"sort"
+
 	"github.com/containerd/containerd/log"
 	"github.com/mc256/starlight/fs"
 	"github.com/mc256/starlight/merger"
 	"github.com/mc256/starlight/util"
 	bolt "go.etcd.io/bbolt"
-	"sort"
 )
 
 // Collection defines the operations between set of files
@@ -328,7 +329,6 @@ func newCollection(ctx context.Context, db *bolt.DB, imageList []*util.ImageRef)
 // LoadCollection creates a new operator that combine
 // imageList should be sorted inorder
 func LoadCollection(ctx context.Context, db *bolt.DB, imageList []*util.ImageRef) (*Collection, error) {
-
 	// Check database
 	tx, err := db.Begin(false)
 	if err != nil {

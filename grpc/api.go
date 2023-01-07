@@ -22,15 +22,17 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"github.com/containerd/containerd/log"
-	"github.com/mc256/starlight/util"
-	"github.com/sirupsen/logrus"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"path"
 	"strconv"
 	"strings"
+
+	"github.com/containerd/containerd/log"
+	"github.com/gorilla/websocket"
+	"github.com/mc256/starlight/util"
+	"github.com/sirupsen/logrus"
 )
 
 type StarlightProxy struct {
@@ -123,23 +125,9 @@ func (a *StarlightProxy) FetchWithString(fromString string, toString string) (io
 	url := fmt.Sprintf("%s://%s", a.protocol, path.Join(a.serverAddress, "from", fromString, "to", toString))
 	//resp, err := http.Get(url)
 
-	req, err := http.NewRequestWithContext(a.ctx, "GET", url, nil)
+	conn, resp, err := websocket.DefaultDialer.Dial(url, nil)
 	if err != nil {
 		return nil, 0, err
-	}
-	req.Header.Set("Connection", "Keep-Alive")
-
-	resp, err := a.client.Do(req)
-	if err != nil {
-		return nil, 0, err
-	}
-
-	if resp.StatusCode != 200 {
-		log.G(a.ctx).WithFields(logrus.Fields{
-			"code":    fmt.Sprintf("%d", resp.StatusCode),
-			"version": resp.Header.Get("Starlight-Version"),
-		}).Warn("server cannot build delta image")
-		return nil, 0, util.ErrUnknownManifest
 	}
 
 	log.G(a.ctx).WithFields(logrus.Fields{
@@ -154,7 +142,17 @@ func (a *StarlightProxy) FetchWithString(fromString string, toString string) (io
 		return nil, 0, err
 	}
 
-	return resp.Body, int64(headerSize), nil
+	var r io.Reader
+	if _, r, err = conn.NextReader(); err != nil {
+		return nil, 0, err
+	}
+
+	return struct {
+		io.Reader
+		*websocket.Conn
+	}{
+		r, conn,
+	}, int64(headerSize), nil
 }
 
 func NewStarlightProxy(ctx context.Context, protocol, server string) *StarlightProxy {

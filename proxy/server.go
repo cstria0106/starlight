@@ -22,17 +22,19 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"github.com/containerd/containerd/log"
-	"github.com/mc256/starlight/fs"
-	"github.com/mc256/starlight/merger"
-	"github.com/mc256/starlight/util"
-	"github.com/sirupsen/logrus"
-	bolt "go.etcd.io/bbolt"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"strings"
 	"sync"
+
+	"github.com/containerd/containerd/log"
+	"github.com/gorilla/websocket"
+	"github.com/mc256/starlight/fs"
+	"github.com/mc256/starlight/merger"
+	"github.com/mc256/starlight/util"
+	"github.com/sirupsen/logrus"
+	bolt "go.etcd.io/bbolt"
 )
 
 type transition struct {
@@ -86,26 +88,43 @@ func (a *StarlightProxyServer) getDeltaImage(w http.ResponseWriter, req *http.Re
 	buf := bytes.NewBuffer(make([]byte, 0))
 	wg := &sync.WaitGroup{}
 
+	// build header
 	headerSize, contentLength, err := a.builder.WriteHeader(buf, deltaBundle, wg, false)
 	if err != nil {
 		log.G(a.ctx).WithField("err", err).Error("write header cache")
 		return nil
 	}
 
-	header := w.Header()
-	header.Set("Content-Type", "application/octet-stream")
-	header.Set("Content-Length", fmt.Sprintf("%d", contentLength))
+	header := http.Header{}
 	header.Set("Starlight-Header-Size", fmt.Sprintf("%d", headerSize))
+	header.Set("Starlight-Payload-Size", fmt.Sprintf("%d", contentLength))
 	header.Set("Starlight-Version", util.Version)
-	header.Set("Content-Disposition", `attachment; filename="starlight.img"`)
-	w.WriteHeader(http.StatusOK)
 
-	if n, err := io.CopyN(w, buf, headerSize); err != nil || n != headerSize {
+	upgrader := websocket.Upgrader{WriteBufferSize: 1024, ReadBufferSize: 1024}
+	conn, err := upgrader.Upgrade(w, req, header)
+	defer conn.Close()
+
+	if err != nil {
+		log.G(a.ctx).WithField("err", err).Error("http upgrade error")
+		return nil
+	}
+
+	var wc io.WriteCloser
+
+	if wc, err = conn.NextWriter(websocket.BinaryMessage); err != nil {
+		log.G(a.ctx).WithField("err", err).Error("create writer error")
+	}
+
+	defer wc.Close()
+
+	// write header
+	if n, err := io.CopyN(wc, buf, headerSize); err != nil || n != headerSize {
 		log.G(a.ctx).WithField("err", err).Error("write header error")
 		return nil
 	}
 
-	if err = a.builder.WriteBody(w, deltaBundle, wg); err != nil {
+	// write payload
+	if err = a.builder.WriteBody(wc, deltaBundle, wg); err != nil {
 		log.G(a.ctx).WithField("err", err).Error("write body error")
 		return nil
 	}

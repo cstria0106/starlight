@@ -7,6 +7,7 @@ require (
 	github.com/containerd/continuity v0.3.0
 	github.com/docker/distribution v2.8.1+incompatible
 	github.com/google/go-containerregistry v0.5.1
+	github.com/gorilla/websocket v1.4.2
 	github.com/hanwen/go-fuse/v2 v2.1.0
 	github.com/joho/godotenv v1.4.0
 	github.com/opencontainers/go-digest v1.0.0

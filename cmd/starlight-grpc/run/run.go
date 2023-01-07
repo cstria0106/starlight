@@ -33,9 +33,9 @@ func RunAction(c *cli.Context) error {
 		"log-level": c.String("log-level"),
 	}).Info("Starlight Snapshotter")
 
-	protocol := "https"
-	if c.Bool("plain-http") {
-		protocol = "http"
+	protocol := "wss"
+	if c.Bool("insecure") {
+		protocol = "ws"
 	}
 
 	sn.NewSnapshotterGrpcService(
@@ -83,8 +83,8 @@ func RunCommand() *cli.Command {
 				Required: false,
 			},
 			&cli.BoolFlag{
-				Name:     "plain-http",
-				Usage:    "use plain http connects to the remote server",
+				Name:     "insecure",
+				Usage:    "use plain ws connects to the remote server",
 				Required: false,
 			},
 			&cli.BoolFlag{
