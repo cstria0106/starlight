@@ -43,7 +43,7 @@ type Receiver struct {
 	layerStore *LayerStore
 
 	// image are a list of gzip chunks (excluding the TOC header)
-	image io.Reader
+	conn io.ReadWriteCloser
 
 	// fsTemplate is a tree structure TOC. In case we want to create a new instance in fsInstances,
 	// we must perform a deep-copy of this tree.
@@ -71,6 +71,17 @@ type Receiver struct {
 	cb func()
 }
 
+func (r *Receiver) createFileRequestChannel(fr util.FileRequest) chan struct{} {
+	c := make(chan struct{}, 1)
+
+	go func() {
+		<-c
+		_ = fr.Write(r.conn)
+	}()
+
+	return c
+}
+
 func (r *Receiver) GetLayerMounts() []mount.Mount {
 	m := make([]mount.Mount, 0, len(r.layerMap))
 	for _, p := range r.layerMap {
@@ -86,7 +97,7 @@ func (r *Receiver) GetLayerMounts() []mount.Mount {
 	return m
 }
 
-/////////////////////////////////////////////////////////////////
+// ///////////////////////////////////////////////////////////////
 // NewFsInstance creates new file system instance,
 // - imageName, imageTag  should be available in ImageReader. imageLookupMap
 // - snapshotId is the absolute path will be created to hold the rw layer and the mounting point.
@@ -329,6 +340,39 @@ func (r *Receiver) extractFiles() {
 
 	// non-empty files
 	for i := 1; i < len(r.offsets); i++ {
+		for {
+			header := make([]byte, 1)
+			if n, err := r.conn.Read(header); n != 1 || err != nil {
+				log.G(r.ctx).WithField("error", err).Error("header in image reader error")
+				return
+			}
+
+			// break if this is not requested
+			if header[0] == 0 {
+				break
+			}
+
+			// invalid header
+			if header[0] != 1 {
+				log.G(r.ctx).Error("header in image reader error")
+				return
+			}
+
+			var fr util.FileRequest
+			if err := util.ReadFileRequest(r.conn, &fr); err != nil {
+				log.G(r.ctx).WithField("error", err).Error("read file request in header error")
+			}
+
+			buffer := bytes.NewBuffer(make([]byte, 0, fr.CompressedSize))
+			if n, err := io.CopyN(buffer, r.conn, fr.CompressedSize); n != fr.CompressedSize || err != nil {
+				log.G(r.ctx).WithField("error", err).Error("image reader error")
+				return
+			}
+
+			wg.Add(1)
+			go r.decompress(&wg, fr.SourceOffset, fr.CompressedSize, buffer)
+		}
+
 		next := r.offsets[i]
 
 		// size is zero that means empty files
@@ -340,7 +384,7 @@ func (r *Receiver) extractFiles() {
 
 		// size is non-zero that means we have to extract this file
 		buffer := bytes.NewBuffer(make([]byte, 0, size))
-		if n, err := io.CopyN(buffer, r.image, size); n != size || err != nil {
+		if n, err := io.CopyN(buffer, r.conn, size); n != size || err != nil {
 			log.G(r.ctx).WithField("error", err).Error("image reader error")
 			return
 		}
@@ -389,10 +433,10 @@ func (r *Receiver) ExtractFiles() {
 // - reader: image reader
 // - tocOffset: size of the TOC in reader
 // - prefix: to store the layers in one single folder (snapshot id)
-func NewReceiver(ctx context.Context, layerStore *LayerStore, reader io.Reader, headerOffset int64, prefix string, cb func()) (*Receiver, error) {
+func NewReceiver(ctx context.Context, layerStore *LayerStore, conn io.ReadWriteCloser, headerOffset int64, prefix string, cb func()) (*Receiver, error) {
 	// Delta bundle header
 	headerGzBuf := bytes.NewBuffer(make([]byte, 0, headerOffset))
-	if n, err := io.CopyN(headerGzBuf, reader, headerOffset); n != headerOffset || err != nil {
+	if n, err := io.CopyN(headerGzBuf, conn, headerOffset); n != headerOffset || err != nil {
 		return nil, err
 	}
 	headerReader, err := gzip.NewReader(headerGzBuf)
@@ -409,11 +453,16 @@ func NewReceiver(ctx context.Context, layerStore *LayerStore, reader io.Reader, 
 		return nil, err
 	}
 
+	sizes := make(map[int64]int64)
+	for i := 0; i < len(header.Offsets)-1; i++ {
+		sizes[header.Offsets[i]] = header.Offsets[i+1] - header.Offsets[i]
+	}
+
 	// Receiver
 	r := &Receiver{
 		ctx:        context.Background(),
 		layerStore: layerStore,
-		image:      reader,
+		conn:       conn,
 		offsets:    header.Offsets,
 
 		layerMap: make([]*LayerMeta, 0, len(header.DigestList)), // #2
@@ -493,6 +542,7 @@ func NewReceiver(ctx context.Context, layerStore *LayerStore, reader io.Reader, 
 					TraceableEntry: ent,
 					State:          EnRoLayer,
 					ready:          nil,
+					request:        nil,
 				},
 			}
 
@@ -530,9 +580,16 @@ func NewReceiver(ctx context.Context, layerStore *LayerStore, reader io.Reader, 
 				} else if layer := r.layerMap[ent.Source-1]; layer.AtomicIsComplete() {
 					temp.State = EnRoLayer
 				} else {
+					offset := (*temp.DeltaOffset)[0]
 					temp.State = EnEmpty
 					temp.ready = make(chan bool, 1)
-					offset := (*temp.DeltaOffset)[0]
+					temp.request = r.createFileRequestChannel(
+						util.FileRequest{
+							Source:         int64(ent.Source),
+							SourceOffset:   ent.Offset,
+							CompressedSize: sizes[offset],
+						},
+					)
 					if n, ok := r.entryMap[offset]; ok {
 						*n = append(*n, temp)
 					} else {
@@ -573,16 +630,13 @@ func NewReceiver(ctx context.Context, layerStore *LayerStore, reader io.Reader, 
 	return r, nil
 }
 
+type wrapReader struct{ io.Reader }
+
 func NewReceiverFromFile(ctx context.Context, layerStore *LayerStore, filename string, headerOffset int64) (*Receiver, error) {
 	f, err := os.Open(filename)
 	if err != nil {
 		return nil, err
 	}
 
-	fi, err := f.Stat()
-	if err != nil {
-		return nil, err
-	}
-	sr := io.NewSectionReader(f, 0, fi.Size())
-	return NewReceiver(ctx, layerStore, io.Reader(sr), headerOffset, "file", nil)
+	return NewReceiver(ctx, layerStore, f, headerOffset, "file", nil)
 }

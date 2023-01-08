@@ -40,7 +40,7 @@ const (
 	EnRwLayer = int8(3)
 )
 
-//---------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------
 // TocEntry interface
 // supports RootEntry and Entry
 type TocEntry interface {
@@ -77,7 +77,7 @@ func (le *LandmarkEntry) String() string {
 	return fmt.Sprintf("Landmark-%s-%s", le.image, le.checkpoint)
 }
 
-//---------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------
 // TemplateEntry
 type TemplateEntry struct {
 	Entry
@@ -103,6 +103,7 @@ func (t *TemplateEntry) DeepCopy(fi *FsInstance) *FsEntry {
 			TraceableEntry: util.GetRootNode(),
 			State:          EnRwLayer,
 			ready:          t.ready,
+			request:        t.request,
 		},
 		fi:      fi,
 		StateMu: sync.Mutex{},
@@ -120,7 +121,7 @@ func (t *TemplateEntry) DeepCopy(fi *FsInstance) *FsEntry {
 	return ent
 }
 
-//---------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------
 // FsEntry
 type FsEntry struct {
 	Entry
@@ -136,6 +137,7 @@ func NewFsEntry(fi *FsInstance, t *TemplateEntry) *FsEntry {
 			TraceableEntry: t.TraceableEntry.DeepCopy(),
 			State:          t.State,
 			ready:          t.ready,
+			request:        t.request,
 		},
 		fi:      fi,
 		StateMu: sync.Mutex{},
@@ -354,7 +356,7 @@ func (fe *FsEntry) Promote() syscall.Errno {
 	return 0
 }
 
-//---------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------
 // Entry
 type Entry struct {
 	*util.TraceableEntry
@@ -362,8 +364,9 @@ type Entry struct {
 	parent TocEntry
 	child  map[string]TocEntry
 
-	State int8
-	ready chan bool
+	State   int8
+	ready   chan bool
+	request chan struct{}
 }
 
 func (en *Entry) AddChild(base string, entry TocEntry) {

@@ -22,6 +22,7 @@ import (
 	"bytes"
 	"compress/gzip"
 	"context"
+	"fmt"
 	"io"
 	"net/http"
 	"path"
@@ -55,9 +56,14 @@ type sentMapKey = struct {
 
 type sentMap = map[sentMapKey]struct{}
 
-func (ib *DeltaBundleBuilder) writeBody(r readers, sm sentMap, w io.Writer, source int, sourceOffset int64, compressedSize int64) error {
+func (ib *DeltaBundleBuilder) writeBody(r readers, sm sentMap, w io.Writer, source int, sourceOffset int64, compressedSize int64, fileRequest *util.FileRequest) error {
+	if fileRequest != nil {
+		fmt.Printf("responded to file request %d.%d\n", source, sourceOffset)
+	}
+
 	_, sent := sm[sentMapKey{source, sourceOffset}]
 	if sent {
+		fmt.Println("try to send already sent chunk")
 		return nil
 	}
 	sm[sentMapKey{source, sourceOffset}] = struct{}{}
@@ -69,6 +75,26 @@ func (ib *DeltaBundleBuilder) writeBody(r readers, sm sentMap, w io.Writer, sour
 	}).Trace("request range")
 	sr := io.NewSectionReader(r[source], sourceOffset, compressedSize)
 
+	var header byte = 0
+	if fileRequest != nil {
+		header = 1
+	}
+
+	if n, err := w.Write([]byte{header}); n != 1 || err != nil {
+		log.G(ib.ctx).WithFields(logrus.Fields{
+			"Error": err,
+		}).Warn("write body error")
+		return err
+	}
+
+	if fileRequest != nil {
+		if err := fileRequest.Write(w); err != nil {
+			log.G(ib.ctx).WithFields(logrus.Fields{
+				"Error": err,
+			}).Warn("write body error")
+			return err
+		}
+	}
 	_, err := io.CopyN(w, sr, compressedSize)
 	if err != nil {
 		log.G(ib.ctx).WithFields(logrus.Fields{
@@ -93,14 +119,17 @@ func (ib *DeltaBundleBuilder) WriteBody(fileRequests *FileRequests, w io.Writer,
 	for _, ent := range c.OutputQueue {
 		sm := make(sentMap)
 		for {
-			exists, source, sourceOffset, compressedSize := fileRequests.Pop()
+			exists, fr := fileRequests.Pop()
 			if !exists {
 				break
 			}
-			ib.writeBody(r, sm, w, source, sourceOffset, compressedSize)
+			if err := ib.writeBody(r, sm, w, int(fr.Source), fr.SourceOffset, fr.CompressedSize, &fr); err != nil {
+				return err
+			}
 		}
-		ib.writeBody(r, sm, w, ent.Source, ent.SourceOffset, ent.CompressedSize)
-
+		if err := ib.writeBody(r, sm, w, ent.Source, ent.SourceOffset, ent.CompressedSize, nil); err != nil {
+			return err
+		}
 	}
 	log.G(ib.ctx).Info("wrote image body")
 	return nil

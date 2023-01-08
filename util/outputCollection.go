@@ -23,6 +23,11 @@ import (
 	"io"
 )
 
+type SourceAddress struct {
+	Source       int
+	SourceOffset int64
+}
+
 type OutputEntry struct {
 	Source       int   // maps to Consolidator.source
 	SourceOffset int64 // offset in the source layer

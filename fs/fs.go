@@ -48,6 +48,10 @@ type StarlightFsNode struct {
 }
 
 func (n *StarlightFsNode) FileReadyWait() {
+	if n.Ent.request != nil {
+		close(n.Ent.request)
+	}
+
 	if n.Ent.fi.optimize {
 		beginTs := time.Now()
 
@@ -265,9 +269,10 @@ func (n *StarlightFsNode) Link(ctx context.Context, target fs.InodeEmbedder, nam
 					Type: "hardlink",
 				},
 			},
-			parent: n.Ent,
-			State:  EnRwLayer,
-			ready:  nil,
+			parent:  n.Ent,
+			State:   EnRwLayer,
+			ready:   nil,
+			request: nil,
 		},
 	})
 
@@ -716,9 +721,10 @@ func (n *StarlightFsNode) Symlink(ctx context.Context, target, name string, out 
 					LinkName: target,
 				},
 			},
-			parent: n.Ent,
-			State:  EnRwLayer,
-			ready:  nil,
+			parent:  n.Ent,
+			State:   EnRwLayer,
+			ready:   nil,
+			request: nil,
 		},
 	})
 
@@ -784,9 +790,10 @@ func (n *StarlightFsNode) Mkdir(ctx context.Context, name string, mode uint32, o
 					Type: "dir",
 				},
 			},
-			parent: n.Ent,
-			State:  EnRwLayer,
-			ready:  nil,
+			parent:  n.Ent,
+			State:   EnRwLayer,
+			ready:   nil,
+			request: nil,
 		},
 	})
 
@@ -868,8 +875,9 @@ func (n *StarlightFsNode) Create(ctx context.Context, name string, flags uint32,
 					Type: "reg",
 				},
 			},
-			State: EnRwLayer,
-			ready: nil,
+			State:   EnRwLayer,
+			ready:   nil,
+			request: nil,
 		},
 	})
 	child.parent = n.Ent
@@ -1166,9 +1174,10 @@ func (n *StarlightFsNode) Mknod(ctx context.Context, name string, mode, rdev uin
 					Type: "dir",
 				},
 			},
-			parent: n.Ent,
-			State:  EnRwLayer,
-			ready:  nil,
+			parent:  n.Ent,
+			State:   EnRwLayer,
+			ready:   nil,
+			request: nil,
 		},
 	})
 

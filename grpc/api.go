@@ -109,7 +109,7 @@ func (a *StarlightProxy) Prepare(imageName, imageTag string) error {
 	return nil
 }
 
-func (a *StarlightProxy) Fetch(have []string, want []string) (io.ReadCloser, int64, error) {
+func (a *StarlightProxy) Fetch(have []string, want []string) (io.ReadWriteCloser, int64, error) {
 	var fromString string
 	if len(have) == 0 {
 		fromString = "_"
@@ -121,9 +121,8 @@ func (a *StarlightProxy) Fetch(have []string, want []string) (io.ReadCloser, int
 	return a.FetchWithString(fromString, toString)
 }
 
-func (a *StarlightProxy) FetchWithString(fromString string, toString string) (io.ReadCloser, int64, error) {
+func (a *StarlightProxy) FetchWithString(fromString string, toString string) (io.ReadWriteCloser, int64, error) {
 	url := fmt.Sprintf("%s://%s", a.protocol, path.Join(a.serverAddress, "from", fromString, "to", toString))
-	//resp, err := http.Get(url)
 
 	conn, resp, err := websocket.DefaultDialer.Dial(url, nil)
 	if err != nil {
@@ -142,17 +141,7 @@ func (a *StarlightProxy) FetchWithString(fromString string, toString string) (io
 		return nil, 0, err
 	}
 
-	var r io.Reader
-	if _, r, err = conn.NextReader(); err != nil {
-		return nil, 0, err
-	}
-
-	return struct {
-		io.Reader
-		*websocket.Conn
-	}{
-		r, conn,
-	}, int64(headerSize), nil
+	return util.WrapConn(util.WebsocketConnToReadWriteCloser(conn)), int64(headerSize), nil
 }
 
 func NewStarlightProxy(ctx context.Context, protocol, server string) *StarlightProxy {

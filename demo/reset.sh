@@ -24,6 +24,7 @@ rm -rf "${STARLIGHT_SNAPSHOTTER_ROOT}"*
 
 # Remove Redis data folder
 rm -rf /tmp/test-redis-data
+rm -rf /tmp/test-pg-data
 
 
 # Restart the service

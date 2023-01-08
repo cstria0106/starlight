@@ -21,7 +21,6 @@ package proxy
 import (
 	"bytes"
 	"context"
-	"encoding/binary"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -102,24 +101,18 @@ func (a *StarlightProxyServer) getDeltaImage(w http.ResponseWriter, req *http.Re
 	header.Set("Starlight-Version", util.Version)
 
 	upgrader := websocket.Upgrader{WriteBufferSize: 1024, ReadBufferSize: 1024}
-	conn, err := upgrader.Upgrade(w, req, header)
+	wsConn, err := upgrader.Upgrade(w, req, header)
 	if err != nil {
 		log.G(a.ctx).WithField("err", err).Error("http upgrade error")
 		return nil
 	}
 
-	defer conn.Close()
+	defer wsConn.Close()
 
-	var wc io.WriteCloser
-
-	if wc, err = conn.NextWriter(websocket.BinaryMessage); err != nil {
-		log.G(a.ctx).WithField("err", err).Error("create writer error")
-	}
-
-	defer wc.Close()
+	conn := util.WebsocketConnToReadWriteCloser(wsConn)
 
 	// write header
-	if n, err := io.CopyN(wc, buf, headerSize); err != nil || n != headerSize {
+	if n, err := io.CopyN(conn, buf, headerSize); err != nil || n != headerSize {
 		log.G(a.ctx).WithField("err", err).Error("write header error")
 		return nil
 	}
@@ -129,22 +122,15 @@ func (a *StarlightProxyServer) getDeltaImage(w http.ResponseWriter, req *http.Re
 
 	go func() {
 		for {
-			t, b, err := conn.ReadMessage()
-			if err != nil {
+			var fr util.FileRequest
+			if err := util.ReadFileRequest(conn, &fr); err != nil {
 				return
 			}
-			if t != websocket.BinaryMessage || len(b) != 12 {
-				continue
-			}
-			fileRequests.Push(
-				int(int32(binary.BigEndian.Uint32(b[:4]))),
-				int64(binary.BigEndian.Uint64(b[4:12])),
-				int64(binary.BigEndian.Uint32(b[12:])),
-			)
+			fileRequests.Push(fr)
 		}
 	}()
 
-	if err = a.builder.WriteBody(fileRequests, wc, deltaBundle, wg); err != nil {
+	if err = a.builder.WriteBody(fileRequests, conn, deltaBundle, wg); err != nil {
 		log.G(a.ctx).WithField("err", err).Error("write body error")
 		return nil
 	}

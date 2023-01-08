@@ -1,31 +1,30 @@
 package proxy
 
-import "sync"
+import (
+	"sync"
 
-type fileRequestItem struct {
-	Source                       int
-	SourceOffset, CompressedSize int64
-}
+	"github.com/mc256/starlight/util"
+)
 
 type FileRequests struct {
 	lock  sync.RWMutex
-	items []fileRequestItem
+	items []util.FileRequest
 }
 
-func (f *FileRequests) Pop() (bool, int, int64, int64) {
+func (f *FileRequests) Pop() (bool, util.FileRequest) {
 	f.lock.RLock()
 	defer f.lock.RUnlock()
 	if len(f.items) == 0 {
-		return false, 0, 0, 0
+		return false, util.FileRequest{}
 	}
 
 	e := f.items[0]
 	f.items = f.items[1:]
-	return true, e.Source, e.SourceOffset, e.CompressedSize
+	return true, e
 }
 
-func (f *FileRequests) Push(source int, sourceOffset, compressedSize int64) {
+func (f *FileRequests) Push(fr util.FileRequest) {
 	f.lock.Lock()
-	f.items = append(f.items, fileRequestItem{source, sourceOffset, compressedSize})
+	f.items = append(f.items, fr)
 	f.lock.Unlock()
 }

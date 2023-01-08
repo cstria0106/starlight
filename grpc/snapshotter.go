@@ -41,14 +41,14 @@ import (
 )
 
 /*
-                             prepare: target() [id] ____________________________
-									|                                          |
-							  commit: accelerated()  [id]                      |
-			  ______________________|_____________________                     |
-			 |                                            |                    |
-      prepare: worker-N [mountingPoint]            prepare: loading() [id]     |
-	         |                                            |                    |
-        mount: [mountingPoint]                      commit: source() [id]  -----
+	                             prepare: target() [id] ____________________________
+										|                                          |
+								  commit: accelerated()  [id]                      |
+				  ______________________|_____________________                     |
+				 |                                            |                    |
+	      prepare: worker-N [mountingPoint]            prepare: loading() [id]     |
+		         |                                            |                    |
+	        mount: [mountingPoint]                      commit: source() [id]  -----
 */
 type snapshotter struct {
 	gCtx context.Context
@@ -185,7 +185,7 @@ func (o *snapshotter) Close() error {
 	return err2
 }
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 func (o *snapshotter) Usage(ctx context.Context, key string) (snapshots.Usage, error) {
 	log.G(ctx).WithField("key", key).Info("usage")
 	ctx, t, err := o.ms.TransactionContext(ctx, false)
@@ -248,12 +248,12 @@ func (o *snapshotter) pullImage(ctx context.Context, key, parent, _key, _parent 
 	if ir, hasIr := o.receiver[targetImage]; hasIr {
 		mnt = ir.GetLayerMounts()
 	} else {
-		rc, headerSize, err := o.remote.FetchWithString(sourceImage, targetImage)
+		conn, headerSize, err := o.remote.FetchWithString(sourceImage, targetImage)
 		if err != nil {
 			return nil, err
 		}
 
-		nir, err := starlightfs.NewReceiver(ctx, o.layerStore, rc, headerSize, sn.ID, func() {
+		nir, err := starlightfs.NewReceiver(ctx, o.layerStore, conn, headerSize, sn.ID, func() {
 			o.extractionCompleted(targetImage)
 		})
 		if err != nil {
