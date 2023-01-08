@@ -46,30 +46,61 @@ type DeltaBundleBuilder struct {
 	client http.Client
 }
 
-func (ib *DeltaBundleBuilder) WriteBody(w io.Writer, c *util.ProtocolTemplate, wg *sync.WaitGroup) (err error) {
+type readers = map[int]*io.SectionReader
+
+type sentMapKey = struct {
+	source       int
+	sourceOffset int64
+}
+
+type sentMap = map[sentMapKey]struct{}
+
+func (ib *DeltaBundleBuilder) writeBody(r readers, sm sentMap, w io.Writer, source int, sourceOffset int64, compressedSize int64) error {
+	_, sent := sm[sentMapKey{source, sourceOffset}]
+	if sent {
+		return nil
+	}
+	sm[sentMapKey{source, sourceOffset}] = struct{}{}
+
+	log.G(ib.ctx).WithFields(logrus.Fields{
+		"offset": sourceOffset,
+		"length": compressedSize,
+		"source": source,
+	}).Trace("request range")
+	sr := io.NewSectionReader(r[source], sourceOffset, compressedSize)
+
+	_, err := io.CopyN(w, sr, compressedSize)
+	if err != nil {
+		log.G(ib.ctx).WithFields(logrus.Fields{
+			"Error": err,
+		}).Warn("write body error")
+		return err
+	}
+
+	return nil
+}
+
+func (ib *DeltaBundleBuilder) WriteBody(fileRequests *FileRequests, w io.Writer, c *util.ProtocolTemplate, wg *sync.WaitGroup) (err error) {
 	wg.Wait()
 
-	readers := make(map[int]*io.SectionReader, len(c.DigestList)+1)
+	r := make(map[int]*io.SectionReader, len(c.DigestList)+1)
 	for i, d := range c.DigestList {
 		if c.RequiredLayer[i+1] {
-			readers[i+1] = ib.layerReaders[d.Digest.String()]
+			r[i+1] = ib.layerReaders[d.Digest.String()]
 		}
 	}
-	for _, ent := range c.OutputQueue {
-		log.G(ib.ctx).WithFields(logrus.Fields{
-			"offset": ent.SourceOffset,
-			"length": ent.CompressedSize,
-			"source": ent.Source,
-		}).Trace("request range")
-		sr := io.NewSectionReader(readers[ent.Source], ent.SourceOffset, ent.CompressedSize)
 
-		_, err := io.CopyN(w, sr, ent.CompressedSize)
-		if err != nil {
-			log.G(ib.ctx).WithFields(logrus.Fields{
-				"Error": err,
-			}).Warn("write body error")
-			return err
+	for _, ent := range c.OutputQueue {
+		sm := make(sentMap)
+		for {
+			exists, source, sourceOffset, compressedSize := fileRequests.Pop()
+			if !exists {
+				break
+			}
+			ib.writeBody(r, sm, w, source, sourceOffset, compressedSize)
 		}
+		ib.writeBody(r, sm, w, ent.Source, ent.SourceOffset, ent.CompressedSize)
+
 	}
 	log.G(ib.ctx).Info("wrote image body")
 	return nil
