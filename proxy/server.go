@@ -117,20 +117,7 @@ func (a *StarlightProxyServer) getDeltaImage(w http.ResponseWriter, req *http.Re
 		return nil
 	}
 
-	// write payload
-	fileRequests := &FileRequests{}
-
-	go func() {
-		for {
-			var fr util.FileRequest
-			if err := util.ReadFileRequest(conn, &fr); err != nil {
-				return
-			}
-			fileRequests.Push(fr)
-		}
-	}()
-
-	if err = a.builder.WriteBody(fileRequests, conn, deltaBundle, wg); err != nil {
+	if err = a.builder.WriteBody(conn, deltaBundle, wg); err != nil {
 		log.G(a.ctx).WithField("err", err).Error("write body error")
 		return nil
 	}

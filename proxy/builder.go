@@ -106,7 +106,7 @@ func (ib *DeltaBundleBuilder) writeBody(r readers, sm sentMap, w io.Writer, sour
 	return nil
 }
 
-func (ib *DeltaBundleBuilder) WriteBody(fileRequests *FileRequests, w io.Writer, c *util.ProtocolTemplate, wg *sync.WaitGroup) (err error) {
+func (ib *DeltaBundleBuilder) WriteBody(w io.Writer, c *util.ProtocolTemplate, wg *sync.WaitGroup) (err error) {
 	wg.Wait()
 
 	r := make(map[int]*io.SectionReader, len(c.DigestList)+1)
@@ -118,15 +118,6 @@ func (ib *DeltaBundleBuilder) WriteBody(fileRequests *FileRequests, w io.Writer,
 
 	for _, ent := range c.OutputQueue {
 		sm := make(sentMap)
-		for {
-			exists, fr := fileRequests.Pop()
-			if !exists {
-				break
-			}
-			if err := ib.writeBody(r, sm, w, int(fr.Source), fr.SourceOffset, fr.CompressedSize, &fr); err != nil {
-				return err
-			}
-		}
 		if err := ib.writeBody(r, sm, w, ent.Source, ent.SourceOffset, ent.CompressedSize, nil); err != nil {
 			return err
 		}
