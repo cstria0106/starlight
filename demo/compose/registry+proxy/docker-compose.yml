@@ -11,7 +11,7 @@ services:
       - STARLIGHT_PORT=8090
       - LOG_LEVEL=info
       - DB_CONNECTION_STRING=postgres://postgres:postgres@db:5432/postgres?sslmode=disable
-      # - REGISTRY=http://registry:5000 # proxy parsing has some issue
+      - REGISTRY=http://registry:5000 # proxy parsing has some issue
     restart: always
     depends_on:
       - db
