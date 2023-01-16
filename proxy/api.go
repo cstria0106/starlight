@@ -22,9 +22,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/containerd/containerd/log"
-	"github.com/google/go-containerregistry/pkg/name"
-	"github.com/sirupsen/logrus"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -33,6 +30,10 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/containerd/containerd/log"
+	"github.com/google/go-containerregistry/pkg/name"
+	"github.com/sirupsen/logrus"
 )
 
 type StarlightProxy struct {

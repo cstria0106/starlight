@@ -6,10 +6,8 @@
 STARLIGHT_SNAPSHOTTER_ROOT=/var/lib/starlight/
 
 # Stop Starlight and containerd
-systemctl stop containerd
-systemctl stop starlight
-systemctl disable containerd
-systemctl disable starlight
+systemctl disable --now containerd
+# systemctl disable --now containerd starlight
 pkill -9 'containerd' | true
 pkill -9 'starlight' | true
 
@@ -31,3 +29,6 @@ rm -rf /tmp/test-redis-data
 # Restart the service
 #./out/starlight-grpc  run --server=starlight.yuri.moe --log-level=debug &
 #containerd &
+
+systemctl enable --now containerd
+# systemctl enable --now containerd starlight

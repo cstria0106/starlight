@@ -8,14 +8,15 @@ package fs
 import (
 	"context"
 	"fmt"
-	"github.com/containerd/containerd/log"
-	"github.com/hanwen/go-fuse/v2/fs"
-	"github.com/hanwen/go-fuse/v2/fuse"
-	"github.com/sirupsen/logrus"
 	"path/filepath"
 	"strings"
 	"syscall"
 	"time"
+
+	"github.com/containerd/containerd/log"
+	"github.com/hanwen/go-fuse/v2/fs"
+	"github.com/hanwen/go-fuse/v2/fuse"
+	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -75,6 +76,7 @@ var _ = (fs.NodeLookuper)((*StarlightFsNode)(nil))
 
 func (n *StarlightFsNode) Lookup(ctx context.Context, name string, out *fuse.EntryOut) (*fs.Inode, syscall.Errno) {
 	f := n.getFile(filepath.Join(n.GetName(), name))
+
 	if f == nil {
 		return nil, syscall.ENOENT
 	}

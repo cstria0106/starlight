@@ -1,6 +1,8 @@
 version: "3"
 services:
   proxy:
+    extra_hosts:
+      - 'cloud.cluster.local:192.168.56.102'
     image: "ghcr.io/mc256/starlight/proxy:latest"
     ports:
       - 8090:8090
@@ -11,7 +13,7 @@ services:
       - STARLIGHT_PORT=8090
       - LOG_LEVEL=info
       - DB_CONNECTION_STRING=postgres://postgres:postgres@db:5432/postgres?sslmode=disable
-      - REGISTRY=http://registry:5000 # proxy parsing has some issue
+      # - REGISTRY=http://registry:5000 # proxy parsing has some issue
     restart: always
     depends_on:
       - db
