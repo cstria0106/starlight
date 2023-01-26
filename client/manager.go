@@ -313,12 +313,11 @@ func (m *Manager) Init(ctr *containerd.Client, client *Client, ctx context.Conte
 		for _, f := range m.RequestedFiles {
 			if _, isInPayload := f.InPayload(); isInPayload {
 				waiting := make(chan struct{})
+				fileToRequest := f
 				go func() {
 					<-waiting
 
-					// request
-
-					fmt.Println(f.Name, "is requested")
+					fmt.Println(fileToRequest.Name, "is requested")
 				}()
 
 				f.Ready = &m.Contents[f.PayloadOrder].Signal
