@@ -95,11 +95,8 @@ func (m *Manager) GetPathBySerial(serial int64) string {
 
 func (m *Manager) LookUpFile(stack int64, filename string) fs.ReceivedFile {
 	if file, has := m.fileLookUpMap[stack][filename]; has {
-		fmt.Println("file found on look up stack", stack, "filename", filename)
 		return file
 	}
-
-	fmt.Println("nil on look up stack", stack, "filename", filename)
 
 	return nil
 }
