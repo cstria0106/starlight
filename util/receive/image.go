@@ -167,6 +167,7 @@ func (r *ReferencedFile) WaitForReady() {
 		close(*r.Waiting)
 	}
 	<-*r.Ready
+	fmt.Println(r.Name, "is ready!")
 }
 
 func (r *ReferencedFile) IsReferencingRequestedImage() (stack int64, yes bool) {
