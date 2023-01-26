@@ -77,6 +77,8 @@ var _ = (fs.NodeLookuper)((*StarlightFsNode)(nil))
 func (n *StarlightFsNode) Lookup(ctx context.Context, name string, out *fuse.EntryOut) (*fs.Inode, syscall.Errno) {
 	f := n.getFile(filepath.Join(n.GetName(), name))
 
+	log.G(ctx).WithField("name", name).Println("Lookup")
+
 	if f == nil {
 		return nil, syscall.ENOENT
 	}
