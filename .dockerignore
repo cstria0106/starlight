@@ -5,3 +5,5 @@ sandbox
 
 .github
 my-values.yaml
+
+demo/**/*data*
