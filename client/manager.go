@@ -171,6 +171,7 @@ func (m *Manager) Extract(r *io.ReadCloser) (err error) {
 			}
 			_ = f.Close()
 			isClosed = true
+			fmt.Println("File is extracted, the path:", filepath.Join(p, pp))
 			close(c.Signal) // send out signal that this content is ready
 			return nil
 		}()
