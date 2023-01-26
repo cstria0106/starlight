@@ -86,6 +86,7 @@ func (n *StarlightFsNode) Lookup(ctx context.Context, name string, out *fuse.Ent
 
 	var attr fuse.Attr
 	if err := f.GetAttr(&attr); err != 0 {
+		log.G(ctx).WithFields(logrus.Fields{"stack": n.instance.stack, "name": name, "error": err}).Println("Lookup GetAttr error")
 		return nil, err
 	}
 	out.Attr = attr
