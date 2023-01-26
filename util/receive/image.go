@@ -7,14 +7,15 @@ package receive
 
 import (
 	"fmt"
+	"path/filepath"
+	"syscall"
+	"unsafe"
+
 	fuseFs "github.com/hanwen/go-fuse/v2/fs"
 	"github.com/hanwen/go-fuse/v2/fuse"
 	"github.com/mc256/starlight/client/fs"
 	"github.com/mc256/starlight/util/common"
 	"golang.org/x/sys/unix"
-	"path/filepath"
-	"syscall"
-	"unsafe"
 )
 
 type ImageLayer struct {
@@ -80,6 +81,9 @@ type ReferencedFile struct {
 
 	// if Ready is nil or closed, means the file is ready
 	Ready *chan interface{} `json:"-"`
+
+	// if Waiting is not nil and closed, means the file is waited
+	Waiting *chan struct{} `json:"-"`
 
 	stable   fuseFs.StableAttr
 	children []fs.ReceivedFile
@@ -159,6 +163,9 @@ func (r *ReferencedFile) GetRealPath() string {
 }
 
 func (r *ReferencedFile) WaitForReady() {
+	if r.Waiting != nil {
+		close(*r.Waiting)
+	}
 	<-*r.Ready
 }
 
