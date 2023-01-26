@@ -312,6 +312,7 @@ func (m *Manager) Init(ctr *containerd.Client, client *Client, ctx context.Conte
 		// create filesystem template
 		for _, f := range m.RequestedFiles {
 			if _, isInPayload := f.InPayload(); isInPayload {
+				fmt.Println(f.Name, "is in payload!")
 				waiting := make(chan struct{})
 				fileToRequest := f
 				go func() {
@@ -323,7 +324,6 @@ func (m *Manager) Init(ctr *containerd.Client, client *Client, ctx context.Conte
 				f.Ready = &m.Contents[f.PayloadOrder].Signal
 				f.Waiting = &waiting
 			} else {
-				fmt.Println(f.Name, "is not in payload!")
 				f.Ready = nil
 				f.Waiting = nil
 			}
