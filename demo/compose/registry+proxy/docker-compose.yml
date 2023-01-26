@@ -3,7 +3,11 @@ services:
   proxy:
     extra_hosts:
       - 'cloud.cluster.local:192.168.56.102'
-    image: "ghcr.io/mc256/starlight/proxy:latest"
+    image: starlight-proxy
+    build:
+      context: ../../..
+      dockerfile: Dockerfile
+      target: starlight-proxy
     ports:
       - 8090:8090
     command:
