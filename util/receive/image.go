@@ -200,8 +200,11 @@ func (r *ReferencedFile) ExistingFsIndex() (layerSerial int64, existing bool) {
 }
 
 func (r *ReferencedFile) InPayload() (stack int64, inPayload bool) {
-	if r.PayloadOrder > 0 && r.ReferenceStack == r.Stack {
+	if r.ReferenceStack > 0 {
 		return r.ReferenceStack, true
+	}
+	if r.PayloadOrder > 0 {
+		return r.Stack, true
 	}
 	return -1, false
 }
