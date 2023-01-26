@@ -24,6 +24,11 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"io"
+	"math"
+	"net/http"
+	"sort"
+
 	"github.com/containerd/containerd/log"
 	"github.com/google/go-containerregistry/pkg/name"
 	"github.com/mc256/starlight/util"
@@ -32,10 +37,6 @@ import (
 	"github.com/opencontainers/go-digest"
 	"github.com/pkg/errors"
 	"golang.org/x/sync/errgroup"
-	"io"
-	"math"
-	"net/http"
-	"sort"
 )
 
 ////////////////////////////////////////////////
@@ -95,6 +96,7 @@ func (b *Builder) WriteHeader(w http.ResponseWriter, req *http.Request) error {
 
 	// header
 	h, err := json.Marshal(b)
+	fmt.Println(string(h))
 	if err != nil {
 		return err
 	}
