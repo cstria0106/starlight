@@ -203,9 +203,6 @@ func (r *ReferencedFile) InPayload() (stack int64, inPayload bool) {
 	if r.ReferenceStack > 0 {
 		return r.ReferenceStack, true
 	}
-	if r.PayloadOrder > 0 {
-		return r.Stack, true
-	}
 	return -1, false
 }
 
