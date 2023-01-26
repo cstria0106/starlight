@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"syscall"
+	"time"
 	"unsafe"
 
 	fuseFs "github.com/hanwen/go-fuse/v2/fs"
@@ -163,8 +164,10 @@ func (r *ReferencedFile) GetRealPath() string {
 }
 
 func (r *ReferencedFile) WaitForReady() {
+	b := time.Now()
 	close(*r.Waiting)
 	<-*r.Ready
+	fmt.Println("elapsed time for the file", r.Name, "is ready:", time.Now().Sub(b).String())
 }
 
 func (r *ReferencedFile) IsReferencingRequestedImage() (stack int64, yes bool) {

@@ -317,7 +317,7 @@ func (m *Manager) Init(ctr *containerd.Client, client *Client, ctx context.Conte
 				go func() {
 					<-waiting
 
-					fmt.Println(fileToRequest.Name, "is requested")
+					log.G(ctx).WithField("filename", fileToRequest.Name).Println("new file is requested")
 				}()
 
 				f.Ready = &m.Contents[f.PayloadOrder].Signal
