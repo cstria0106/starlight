@@ -182,6 +182,7 @@ var _ = (fs.NodeOpener)((*StarlightFsNode)(nil))
 
 func (n *StarlightFsNode) Open(ctx context.Context, flags uint32) (fs.FileHandle, uint32, syscall.Errno) {
 	r, err := n.getRealPath()
+	fmt.Printf("Open file %s (%s)", n.GetName(), r)
 	if err != nil {
 		log.G(ctx).WithFields(logrus.Fields{
 			"_s": n.instance.stack,
