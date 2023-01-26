@@ -323,6 +323,7 @@ func (m *Manager) Init(ctr *containerd.Client, client *Client, ctx context.Conte
 				f.Ready = &m.Contents[f.PayloadOrder].Signal
 				f.Waiting = &waiting
 			} else {
+				fmt.Println(f.Name, "is not in payload!")
 				f.Ready = nil
 				f.Waiting = nil
 			}
