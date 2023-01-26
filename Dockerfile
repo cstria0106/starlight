@@ -1,6 +1,11 @@
 FROM golang:1.18 AS starlight-proxy-build
 
 WORKDIR /go/src/app
+
+COPY go.mod .
+COPY go.sum .
+RUN go mod download
+
 COPY . .
 
 ENV GO111MODULE=on
@@ -18,6 +23,11 @@ CMD ["/opt/starlight-proxy"]
 FROM golang:1.18 AS starlight-cli-build
 
 WORKDIR /go/src/app
+
+COPY go.mod .
+COPY go.sum .
+RUN go mod download
+
 COPY . .
 
 ENV GO111MODULE=on
