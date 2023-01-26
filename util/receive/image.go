@@ -163,10 +163,8 @@ func (r *ReferencedFile) GetRealPath() string {
 }
 
 func (r *ReferencedFile) WaitForReady() {
-	fmt.Println(r.Name, "is waited!")
 	close(*r.Waiting)
 	<-*r.Ready
-	fmt.Println(r.Name, "is ready!")
 }
 
 func (r *ReferencedFile) IsReferencingRequestedImage() (stack int64, yes bool) {
