@@ -77,12 +77,16 @@ var _ = (fs.NodeLookuper)((*StarlightFsNode)(nil))
 func (n *StarlightFsNode) Lookup(ctx context.Context, name string, out *fuse.EntryOut) (*fs.Inode, syscall.Errno) {
 	f := n.getFile(filepath.Join(n.GetName(), name))
 
+	log.G(ctx).WithFields(logrus.Fields{"stack": n.instance.stack, "name": name}).Println("Lookup")
+
 	if f == nil {
+		log.G(ctx).WithFields(logrus.Fields{"stack": n.instance.stack, "name": name}).Println("Lookup ENOENT")
 		return nil, syscall.ENOENT
 	}
 
 	var attr fuse.Attr
 	if err := f.GetAttr(&attr); err != 0 {
+		log.G(ctx).WithFields(logrus.Fields{"stack": n.instance.stack, "name": name, "error": err}).Println("Lookup GetAttr error")
 		return nil, err
 	}
 	out.Attr = attr
@@ -182,6 +186,10 @@ var _ = (fs.NodeOpener)((*StarlightFsNode)(nil))
 
 func (n *StarlightFsNode) Open(ctx context.Context, flags uint32) (fs.FileHandle, uint32, syscall.Errno) {
 	r, err := n.getRealPath()
+	log.G(ctx).WithFields(logrus.Fields{
+		"filename": n.GetName(),
+		"realPath": r,
+	}).Println("open file")
 	if err != nil {
 		log.G(ctx).WithFields(logrus.Fields{
 			"_s": n.instance.stack,
@@ -189,10 +197,6 @@ func (n *StarlightFsNode) Open(ctx context.Context, flags uint32) (fs.FileHandle
 		}).Error("open")
 		return nil, 0, syscall.ENODATA
 	}
-	log.G(ctx).WithFields(logrus.Fields{
-		"filename": n.GetName(),
-		"realPath": r,
-	}).Println("open file")
 
 	access := time.Now()
 	if !n.IsReady() {
@@ -210,7 +214,7 @@ func (n *StarlightFsNode) Open(ctx context.Context, flags uint32) (fs.FileHandle
 
 	fd, err := syscall.Open(r, int(flags), 0)
 	if err != nil {
-		log.G(ctx).WithField("error", err).Println("failed to open file")
+		log.G(ctx).WithFields(logrus.Fields{"path": r, "error": err}).Println("failed to open file")
 		return nil, 0, fs.ToErrno(err)
 	}
 	return fs.NewLoopbackFile(fd), fuse.FOPEN_KEEP_CACHE, 0
