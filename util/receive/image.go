@@ -163,9 +163,8 @@ func (r *ReferencedFile) GetRealPath() string {
 }
 
 func (r *ReferencedFile) WaitForReady() {
-	if r.Waiting != nil {
-		close(*r.Waiting)
-	}
+	fmt.Println(r.Name, "is waited!")
+	close(*r.Waiting)
 	<-*r.Ready
 	fmt.Println(r.Name, "is ready!")
 }
