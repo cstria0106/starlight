@@ -77,16 +77,12 @@ var _ = (fs.NodeLookuper)((*StarlightFsNode)(nil))
 func (n *StarlightFsNode) Lookup(ctx context.Context, name string, out *fuse.EntryOut) (*fs.Inode, syscall.Errno) {
 	f := n.getFile(filepath.Join(n.GetName(), name))
 
-	log.G(ctx).WithFields(logrus.Fields{"stack": n.instance.stack, "name": name}).Println("Lookup")
-
 	if f == nil {
-		log.G(ctx).WithFields(logrus.Fields{"stack": n.instance.stack, "name": name}).Println("Lookup ENOENT")
 		return nil, syscall.ENOENT
 	}
 
 	var attr fuse.Attr
 	if err := f.GetAttr(&attr); err != 0 {
-		log.G(ctx).WithFields(logrus.Fields{"stack": n.instance.stack, "name": name, "error": err}).Println("Lookup GetAttr error")
 		return nil, err
 	}
 	out.Attr = attr
