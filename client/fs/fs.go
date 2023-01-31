@@ -202,6 +202,8 @@ func (n *StarlightFsNode) Open(ctx context.Context, flags uint32) (fs.FileHandle
 	name := n.GetName()
 	n.log(name, access, complete)
 
+	GetAccessLogger(ctx).Log(name)
+
 	log.G(ctx).WithFields(logrus.Fields{
 		"f":  name,
 		"_s": n.instance.stack,
