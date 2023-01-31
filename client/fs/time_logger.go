@@ -7,29 +7,29 @@ import (
 	"os"
 )
 
-type timeLoggerKey struct{}
+type accessLoggerKey struct{}
 
-type TimeLogger struct {
+type AccessLogger struct {
 	file io.Writer
 }
 
-func WithTimeLogger(ctx context.Context, filepath string) context.Context {
+func WithAccessLogger(ctx context.Context, filepath string) context.Context {
 	var file io.Writer
 	var err error
 	if file, err = os.Create(filepath); err != nil {
-		panic(fmt.Sprintf("file to create time logger file on %s", filepath))
+		panic(fmt.Sprintf("file to create access logger file on %s", filepath))
 	}
 
-	return context.WithValue(ctx, timeLoggerKey{}, &TimeLogger{
+	return context.WithValue(ctx, accessLoggerKey{}, &AccessLogger{
 		file: file,
 	})
 }
 
-func GetTimeLogger(ctx context.Context) *TimeLogger {
-	l := ctx.Value(timeLoggerKey{})
+func GetAccessLogger(ctx context.Context) *AccessLogger {
+	l := ctx.Value(accessLoggerKey{})
 	if l == nil {
-		panic("No time logger in context")
+		panic("No access logger in context")
 	}
 
-	return l.(*TimeLogger)
+	return l.(*AccessLogger)
 }

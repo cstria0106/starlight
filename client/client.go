@@ -1371,7 +1371,7 @@ func (c *Client) StartCLIServer() {
 
 func NewClient(ctx context.Context, cfg *Configuration) (c *Client, err error) {
 	c = &Client{
-		ctx: fs.WithTimeLogger(ctx, "/home/archlinux/time_log.txt"),
+		ctx: fs.WithAccessLogger(ctx, "/home/archlinux/access_log.txt"),
 		cfg: cfg,
 
 		layerMap:   make(map[string]*mountPoint),
