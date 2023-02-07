@@ -15,7 +15,7 @@ def run_and_wait(image: str, cmd: str, wait_for: str, args: str):
         
     p = subprocess.Popen('sudo ctr task start instance1', shell=True, stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
     while True:
-        l = str(p.stdout.readline())
+        l = p.stdout.readline().decode('utf-8')
         if l == '':
             continue
         
