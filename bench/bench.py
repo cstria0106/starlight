@@ -19,9 +19,9 @@ def run_and_wait(image: str, cmd: str, wait_for: str, args: str):
         if l == '':
             continue
         
-        print('[stdout] %s', l.strip())
+        print('[stdout] %s' % l.strip())
         if wait_for is not None:
-            if l.find(wait_for) >= 0:
+            if str(l).find(wait_for) >= 0:
                 print('[done]')
                 rc = os.system('sudo ctr task kill instance1')
                 assert(rc == 0)
