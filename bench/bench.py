@@ -15,13 +15,13 @@ def run_and_wait(image: str, cmd: str, wait_for: str, args: str):
         
     p = subprocess.Popen('sudo ctr task start instance1', shell=True, stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
     while True:
-        l = p.stdout.readline()
+        l = str(p.stdout.readline())
         if l == '':
             continue
         
         print('[stdout] %s' % l.strip())
         if wait_for is not None:
-            if str(l).find(wait_for) >= 0:
+            if l.find(wait_for) >= 0:
                 print('[done]')
                 rc = os.system('sudo ctr task kill instance1')
                 assert(rc == 0)
