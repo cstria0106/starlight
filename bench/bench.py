@@ -41,6 +41,7 @@ class Service:
             print('[stdout] %s' % l.strip())
             if command.wait_for is not None:
                 if l.find(command.wait_for) >= 0:
+                    os.system(command.cleanup_cmd)
                     break
 
         return p.wait()
