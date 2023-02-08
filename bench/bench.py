@@ -43,7 +43,8 @@ class Service:
         for command in self.__commands:
             returncode = self.__execute_command(command)
             if returncode != 0:
-                print('command \'%s\' has returned %d', command.cmd, returncode)
+                print('command \'%s\' has returned %d' %
+                      command.cmd, returncode)
 
 
 class StarlightService(Service):
