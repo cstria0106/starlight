@@ -39,12 +39,15 @@ class Service:
 
         return p.wait()
 
-    def run(self):
+    def run(self) -> int:
         for command in self.__commands:
             returncode = self.__execute_command(command)
             if returncode != 0:
                 print('command \'%s\' has returned %d' %
                       (command.cmd, returncode))
+                return returncode
+
+        return 0
 
 
 class StarlightService(Service):
@@ -108,7 +111,7 @@ def main():
         print('No service named \'%s\'' % service_name)
         exit(1)
 
-    SERVICES[service_name].run()
+    exit(SERVICES[service_name].run())
 
 
 if __name__ == '__main__':
