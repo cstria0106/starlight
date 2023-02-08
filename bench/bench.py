@@ -50,12 +50,15 @@ class Service:
         return p.wait()
 
     def run(self) -> int:
+        start_time = time.time()
         for command in self.__commands:
             returncode = self.__execute_command(command)
             if returncode != 0:
                 print('command \'%s\' has returned %d' %
                       (command.cmd, returncode))
                 return returncode
+
+        print('[all done %.4fs]' % (time.time() - start_time))
 
         return 0
 
