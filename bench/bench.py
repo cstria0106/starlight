@@ -75,7 +75,7 @@ class StarlightService(Service):
                     'sudo ctr-starlight pull --profile myproxy cloud.cluster.local/%s' % image),
                 Command(container_creation_cmd),
                 Command('sudo ctr task start instance', wait_for),
-                Command('sudo ctr task kill instance')
+                Command('sudo ctr task kill instance'),
                 Command('sudo ctr container rm instance')
             ]
         )
