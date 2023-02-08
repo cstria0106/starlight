@@ -62,7 +62,7 @@ class StarlightService(Service):
                                     --snapshotter=starlight \
                                     %s \
                                     cloud.cluster.local/%s \
-                                    instance' % (image, container_creation_args, cmd)
+                                    instance %s' % (container_creation_args, image, cmd)
 
         super().__init__(
             [
