@@ -20,6 +20,9 @@ class Service:
         self.__commands = commands
 
     def __execute_command(self, command: Command) -> int:
+        print('[run] %s', command.cmd)
+        if command.wait_for is not None:
+            print('[wait for] %s', command.wait_for)
         p = subprocess.Popen(
             command.cmd, shell=True, stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
 
