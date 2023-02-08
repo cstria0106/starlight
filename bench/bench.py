@@ -76,7 +76,7 @@ class StarlightService(Service):
 
     def run(self):
         for src, _ in self.__mounts:
-            os.makedirs(src)
+            os.makedirs(src, exist_ok=True)
         return super().run()
 
 
