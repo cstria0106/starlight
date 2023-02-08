@@ -33,7 +33,7 @@ def run_and_wait(image: str, cmd: str, wait_for: str, args: str):
     p.wait()
 
     elapsed_time = time.time() - start_time
-    print('[time] %.2f', elapsed_time)
+    print('[time] %.4f' % elapsed_time)
 
 def main():
     parser = argparse.ArgumentParser(description='Start up time benchmark tool for Starlight')
