@@ -1,10 +1,13 @@
 import os
 import subprocess
 import argparse
+import time
 
 def run_and_wait(image: str, cmd: str, wait_for: str, args: str):
     if args is None:
         args = ' '
+
+    start_time = time.time()
 
     os.system('sudo ctr-starlight pull --profile myproxy cloud.cluster.local/%s' % image)
     os.system('sudo ctr c create \
@@ -28,6 +31,9 @@ def run_and_wait(image: str, cmd: str, wait_for: str, args: str):
                 break
 
     p.wait()
+
+    elapsed_time = time.time() - start_time
+    print('[time] %.2f', elapsed_time)
 
 def main():
     parser = argparse.ArgumentParser(description='Start up time benchmark tool for Starlight')
