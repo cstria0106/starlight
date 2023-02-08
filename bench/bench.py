@@ -19,7 +19,7 @@ class Service:
     def __init__(self, commands: list[Command]) -> None:
         self.__commands = commands
 
-    def __run_and_wait_for(self, command: Command):
+    def __execute_command(self, command: Command):
         p = subprocess.Popen(
             command.cmd, shell=True, stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
 
@@ -35,11 +35,7 @@ class Service:
 
     def run(self):
         for command in self.__commands:
-            if command.wait_for is None:
-                os.system(command)
-            else:
-                self.__run_and_wait_for(command.cmd, command.wait_for)
-        pass
+            self.__execute_command(command)
 
 
 class StarlightService(Service):
