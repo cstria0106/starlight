@@ -108,7 +108,8 @@ SERVICES: dict[str, Service] = {
         '/usr/local/bin/redis-server',
         'Ready to accept connections',
         dict(),
-        [('/tmp/test-redis-data', '/data')]
+        []
+        # [('/tmp/test-redis-data', '/data')]
     )
 }
 
