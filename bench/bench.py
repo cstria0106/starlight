@@ -3,47 +3,108 @@ import subprocess
 import argparse
 import time
 
-def run_and_wait(image: str, cmd: str, wait_for: str, args: str):
-    if args is None:
-        args = ' '
 
-    start_time = time.time()
+class Command:
+    cmd: str
+    wait_for: str | None
 
-    os.system('sudo ctr-starlight pull --profile myproxy cloud.cluster.local/%s' % image)
-    os.system('sudo ctr c create \
-        --snapshotter=starlight \
-        %s \
-        cloud.cluster.local/%s \
-        instance1 %s' % (args, image, cmd))
-        
-    p = subprocess.Popen('sudo ctr task start instance1', shell=True, stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
-    while True:
-        l = p.stdout.readline().decode('utf-8')
-        if l == '':
-            continue
-        
-        print('[stdout] %s' % l.strip())
-        if wait_for is not None:
-            if l.find(wait_for) >= 0:
-                print('[done]')
-                rc = os.system('sudo ctr task kill instance1')
-                assert(rc == 0)
-                break
+    def __init__(self, cmd: str, wait_for: str | None = None) -> None:
+        self.cmd = cmd
+        self.wait_for = wait_for
 
-    p.wait()
 
-    elapsed_time = time.time() - start_time
-    print('[time] %.4f' % elapsed_time)
+class Service:
+    __commands: list[Command]
+
+    def __init__(self, commands: list[Command]) -> None:
+        self.__commands = commands
+
+    def __run_and_wait_for(self, command: Command):
+        p = subprocess.Popen(
+            command.cmd, shell=True, stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
+
+        while True:
+            l = p.stdout.readline().decode('utf-8')
+            if l == '':
+                continue
+
+            print('[stdout] %s' % l.strip())
+            if command.wait_for is not None:
+                if l.find(command.wait_for) >= 0:
+                    break
+
+    def run(self):
+        for command in self.__commands:
+            if command.wait_for is None:
+                os.system(command)
+            else:
+                self.__run_and_wait_for(command.cmd, command.wait_for)
+        pass
+
+
+class StarlightService(Service):
+    __mounts: list[(str, str)]
+
+    def __init__(self, image: str, cmd: str, wait_for: str, env: dict[str, str], mounts: list[(str, str)]) -> None:
+        container_creation_args = ''
+
+        for key, value in env.items():
+            container_creation_args += '--env %s=%s ' % (key, value)
+
+        self.__mounts = mounts
+        for src, dst in mounts:
+            container_creation_args += '--mount type=bind,src=%s,dst=%s=rbind:rw ' % (
+                src, dst)
+
+        container_creation_args += '--net-host'
+
+        container_creation_cmd = 'sudo ctr containers create \
+                                    --snapshotter=starlight \
+                                    %s \
+                                    cloud.cluster.local/%s \
+                                    instance' % (image, container_creation_args, cmd)
+
+        super().__init__(
+            [
+                Command(
+                    'sudo ctr-starlight pull --profile myproxy cloud.cluster.local/%s' % image),
+                Command(container_creation_cmd),
+                Command('sudo ctr task start instance', wait_for),
+                Command('sudo ctr task kill instance')
+            ]
+        )
+
+    def run(self):
+        for src, dst in self.__mounts:
+            os.makedirs(src)
+        return super().run()
+
+
+SERVICES: dict[str, Service] = {
+    'redis': StarlightService(
+        'redis',
+        'redis:6.2.1-starlight',
+        '/usr/local/bin/redis-server',
+        'Ready to accept connections',
+        dict(),
+        [('/tmp/test-redis-data', '/data')]
+    )
+}
+
 
 def main():
-    parser = argparse.ArgumentParser(description='Start up time benchmark tool for Starlight')
-    parser.add_argument('image', type=str)
-    parser.add_argument('cmd', type=str)
-    parser.add_argument('--wait-for', dest='wait_for', type=str)
-    parser.add_argument('--additional-args', dest='args', type=str)
+    parser = argparse.ArgumentParser(
+        description='Start up time benchmark tool for Starlight')
+    parser.add_argument('service', type=str)
     args = parser.parse_args()
-    run_and_wait(args.image, args.cmd, args.wait_for, args.args)
-    pass
+
+    service_name = args.service
+    if service_name not in SERVICES:
+        print('No service named \'%s\'' % service_name)
+        exit(1)
+
+    SERVICES[service_name].run()
+
 
 if __name__ == '__main__':
     main()
