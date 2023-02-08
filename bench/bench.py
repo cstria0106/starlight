@@ -7,10 +7,13 @@ import time
 class Command:
     cmd: str
     wait_for: str | None
+    cleanup_cmd: str | None
 
-    def __init__(self, cmd: str, wait_for: str | None = None) -> None:
+    def __init__(self, cmd: str, wait_for: str | None = None, cleanup_cmd: str | None = None) -> None:
         self.cmd = cmd
         self.wait_for = wait_for
+        self.cleanup_cmd = cleanup_cmd
+        assert ((self.wait_for is None) == (self.cleanup_cmd is None))
 
 
 class Service:
@@ -80,8 +83,8 @@ class StarlightService(Service):
                 Command(
                     'sudo ctr-starlight pull --profile myproxy cloud.cluster.local/%s' % image),
                 Command(container_creation_cmd),
-                Command('sudo ctr task start instance', wait_for),
-                Command('sudo ctr task kill instance'),
+                Command('sudo ctr task start instance',
+                        wait_for, 'sudo ctr task kill instance'),
                 Command('sudo ctr container rm instance')
             ]
         )
