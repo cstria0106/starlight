@@ -64,7 +64,7 @@ class StarlightService(Service):
 
         self.__mounts = mounts
         for src, dst in mounts:
-            container_creation_args += '--mount type=bind,src=%s,dst=%s=rbind:rw ' % (
+            container_creation_args += '--mount type=bind,src=%s,dst=%s,options=rbind:rw ' % (
                 src, dst)
 
         container_creation_args += '--net-host'
