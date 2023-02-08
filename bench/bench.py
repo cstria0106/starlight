@@ -23,6 +23,7 @@ class Service:
         self.__commands = commands
 
     def __execute_command(self, command: Command) -> int:
+        start_time = time.time()
         print('[run] %s' % command.cmd)
         if command.wait_for is not None:
             print('[wait for] %s' % command.wait_for)
@@ -44,6 +45,7 @@ class Service:
                     os.system(command.cleanup_cmd)
                     break
 
+        print('[done %.4fs]' % (time.time() - start_time))
         return p.wait()
 
     def run(self) -> int:
