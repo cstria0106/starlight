@@ -75,14 +75,13 @@ class StarlightService(Service):
         )
 
     def run(self):
-        for src, dst in self.__mounts:
+        for src, _ in self.__mounts:
             os.makedirs(src)
         return super().run()
 
 
 SERVICES: dict[str, Service] = {
     'redis': StarlightService(
-        'redis',
         'redis:6.2.1-starlight',
         '/usr/local/bin/redis-server',
         'Ready to accept connections',
