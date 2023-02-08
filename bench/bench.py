@@ -19,11 +19,15 @@ class Service:
     def __init__(self, commands: list[Command]) -> None:
         self.__commands = commands
 
-    def __execute_command(self, command: Command):
+    def __execute_command(self, command: Command) -> int:
         p = subprocess.Popen(
             command.cmd, shell=True, stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
 
         while True:
+            returncode = p.poll()
+            if returncode is not None:
+                return returncode
+
             l = p.stdout.readline().decode('utf-8')
             if l == '':
                 continue
@@ -33,9 +37,13 @@ class Service:
                 if l.find(command.wait_for) >= 0:
                     break
 
+        return p.wait()
+
     def run(self):
         for command in self.__commands:
-            self.__execute_command(command)
+            returncode = self.__execute_command(command)
+            if returncode != 0:
+                print('command \'%s\' has returned %d', command.cmd, returncode)
 
 
 class StarlightService(Service):
