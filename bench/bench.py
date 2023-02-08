@@ -33,6 +33,7 @@ class Service:
         while True:
             returncode = p.poll()
             if returncode is not None:
+                print('[done %.4fs]' % (time.time() - start_time))
                 return returncode
 
             l = p.stdout.readline().decode('utf-8')
