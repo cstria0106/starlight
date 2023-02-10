@@ -3,19 +3,29 @@ import argparse
 import os
 from typing import Iterable, Tuple
 
-from .bench import Service, StartTimerCommand, TimerContext
+from .bench import PrintTimerCommand, Service, ShellCommand, StartTimerCommand, TimerContext
 
 
 class __ContainerdService(Service):
     __mounts: Iterable[Tuple[str, str]]
 
     def __init__(self, image: str, cmd: str, wait_for: str, env: dict[str, str], mounts: Iterable[Tuple[str, str]]) -> None:
-        start_command = ''
+        start_args = ''
+
+        for key, value in env.items():
+            start_args += '--env %s=%s ' % (key, value)
+
         self.__mounts = mounts
+        for src, dst in mounts:
+            start_args += '--mount type=bind,source=%s,target=%s' % (src, dst)
+
+        start_command = 'nerdctl run %s %s %s' % (start_args, image, cmd)
 
         timer_context = TimerContext('containerd')
         super().__init__((
             StartTimerCommand(timer_context),
+            ShellCommand(start_command, wait_for,
+                         (PrintTimerCommand(timer_context), ShellCommand('')))
         ))
 
     def run(self):
@@ -50,7 +60,7 @@ def run(args: Arguments):
 
 
 def init_argument_parser(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
-    parser.description = 'Check start up time of Containerd Container'
+    parser.description = 'Check start up time of Containerd container using Nerdctl'
     parser.add_argument('service', type=str)
     return parser
 
