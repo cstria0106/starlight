@@ -2,38 +2,68 @@ import os
 import subprocess
 import argparse
 import time
+from collections.abc import Iterable
 
 
 class Command:
+    def execute(self) -> int:
+        raise NotImplementedError()
+
+
+class TimerContext:
+    name: str
+    start_time: float | None
+
+    def __init__(self, name: str) -> None:
+        self.name = name
+        self.start_time = None
+
+
+class StartTimerCommand(Command):
+    context: TimerContext
+
+    def __init__(self, context: TimerContext) -> None:
+        super().__init__()
+        self.context = context
+
+    def execute(self) -> int:
+        self.context.start_time = time.time()
+
+
+class PrintTimerCommand(Command):
+    context: TimerContext
+
+    def __init__(self, context: TimerContext) -> None:
+        super().__init__()
+        self.context = context
+
+    def execute(self) -> int:
+        now = time.time()
+        print('[timer - %s] %.4fs' %
+              (self.context.name, now - self.context.start_time))
+
+
+class ShellCommand(Command):
     cmd: str
     wait_for: str | None
-    cleanup_cmd: str | None
+    cleanup_commands: Iterable[Command] | None
 
-    def __init__(self, cmd: str, wait_for: str | None = None, cleanup_cmd: str | None = None) -> None:
+    def __init__(self, cmd: str, wait_for: str | None = None, cleanup_commands: Iterable[Command] | None = None) -> None:
         self.cmd = cmd
         self.wait_for = wait_for
-        self.cleanup_cmd = cleanup_cmd
-        assert ((self.wait_for is None) == (self.cleanup_cmd is None))
+        self.cleanup_commands = cleanup_commands
+        assert ((self.wait_for is None) == (self.cleanup_commands is None))
 
-
-class Service:
-    __commands: list[Command]
-
-    def __init__(self, commands: list[Command]) -> None:
-        self.__commands = commands
-
-    def __execute_command(self, command: Command) -> int:
-        start_time = time.time()
-        print('[run] %s' % command.cmd)
-        if command.wait_for is not None:
-            print('[wait for] %s' % command.wait_for)
+    def execute(self) -> int:
+        print('[run] %s' % self.cmd)
+        if self.wait_for is not None:
+            print('[wait for] %s' % self.wait_for)
         p = subprocess.Popen(
-            command.cmd, shell=True, stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
+            self.cmd, shell=True, stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
 
         while True:
             returncode = p.poll()
             if returncode is not None:
-                print('[done %.4fs]' % (time.time() - start_time))
                 return returncode
 
             l = p.stdout.readline().decode('utf-8')
@@ -41,32 +71,37 @@ class Service:
                 continue
 
             print('[stdout] %s' % l.strip())
-            if command.wait_for is not None:
-                if l.find(command.wait_for) >= 0:
-                    os.system(command.cleanup_cmd)
+            if self.wait_for is not None:
+                if l.find(self.wait_for) >= 0:
+                    for cleanup_command in self.cleanup_commands:
+                        cleanup_command.execute()
                     break
 
-        print('[done %.4fs]' % (time.time() - start_time))
         return p.wait()
 
+
+class Service:
+    __commands: Iterable[ShellCommand]
+
+    def __init__(self, commands: Iterable[ShellCommand]) -> None:
+        self.__commands = commands
+
     def run(self) -> int:
-        start_time = time.time()
         for command in self.__commands:
-            returncode = self.__execute_command(command)
+            returncode = command.execute()
             if returncode != 0:
                 print('command \'%s\' has returned %d' %
                       (command.cmd, returncode))
                 return returncode
 
-        print('[all done %.4fs]' % (time.time() - start_time))
-
         return 0
 
 
 class StarlightService(Service):
-    __mounts: list[(str, str)]
+    __mounts: Iterable[(str, str)]
+    __timer_context: TimerContext
 
-    def __init__(self, image: str, cmd: str, wait_for: str, env: dict[str, str], mounts: list[(str, str)]) -> None:
+    def __init__(self, image: str, cmd: str, wait_for: str, env: dict[str, str], mounts: Iterable[(str, str)]) -> None:
         container_creation_args = ''
 
         for key, value in env.items():
@@ -85,14 +120,17 @@ class StarlightService(Service):
                                     cloud.cluster.local/%s \
                                     instance %s' % (container_creation_args, image, cmd)
 
+        self.__timer_context = TimerContext('starlight')
+
         super().__init__(
             [
-                Command(
+                StartTimerCommand(self.__timer_context),
+                ShellCommand(
                     'sudo ctr-starlight pull --profile myproxy cloud.cluster.local/%s' % image),
-                Command(container_creation_cmd),
-                Command('sudo ctr task start instance',
-                        wait_for, 'sudo ctr task kill instance'),
-                Command('sudo ctr container rm instance')
+                ShellCommand(container_creation_cmd),
+                ShellCommand('sudo ctr task start instance',
+                             wait_for, [PrintTimerCommand(self.__timer_context), ShellCommand('sudo ctr task kill instance')]),
+                ShellCommand('sudo ctr container rm instance')
             ]
         )
 
