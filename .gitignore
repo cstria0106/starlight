@@ -26,3 +26,5 @@ sandbox/
 vendor/
 
 my-values.yaml
+
+__pycache__
