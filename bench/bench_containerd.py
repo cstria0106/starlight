@@ -10,7 +10,7 @@ class __ContainerdService(Service):
     __mounts: Iterable[Tuple[str, str]]
 
     def __init__(self, image: str, cmd: str, wait_for: str, env: dict[str, str], mounts: Iterable[Tuple[str, str]]) -> None:
-        start_args = '--name instance '
+        start_args = '--insecure-registry --name instance '
 
         for key, value in env.items():
             start_args += '--env %s=%s ' % (key, value)
