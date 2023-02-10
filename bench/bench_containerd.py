@@ -25,7 +25,7 @@ class __ContainerdService(Service):
         super().__init__((
             StartTimerCommand(timer_context),
             ShellCommand(start_command, wait_for,
-                         (PrintTimerCommand(timer_context), ShellCommand('sudo nerdctl container kill instance')))
+                         (PrintTimerCommand(timer_context), ShellCommand('sudo nerdctl container kill -s INT instance')))
         ))
 
     def run(self):
