@@ -1,6 +1,5 @@
-import os
-import subprocess
 import argparse
+import subprocess
 import time
 from collections.abc import Iterable
 
@@ -102,81 +101,6 @@ class Service:
     def __init__(self, commands: Iterable[Command]) -> None:
         self.__commands = commands
 
-    def run(self) -> int:
+    def run(self):
         for command in self.__commands:
             command.execute()
-
-        return 0
-
-
-class StarlightService(Service):
-    __mounts: Iterable[(str, str)]
-    __timer_context: TimerContext
-
-    def __init__(self, image: str, cmd: str, wait_for: str, env: dict[str, str], mounts: Iterable[(str, str)]) -> None:
-        container_creation_args = ''
-
-        for key, value in env.items():
-            container_creation_args += '--env %s=%s ' % (key, value)
-
-        self.__mounts = mounts
-        for src, dst in mounts:
-            container_creation_args += '--mount type=bind,src=%s,dst=%s,options=rbind:rw ' % (
-                src, dst)
-
-        container_creation_args += '--net-host'
-
-        container_creation_cmd = 'sudo ctr containers create \
-                                    --snapshotter=starlight \
-                                    %s \
-                                    cloud.cluster.local/%s \
-                                    instance %s' % (container_creation_args, image, cmd)
-
-        self.__timer_context = TimerContext('starlight')
-
-        super().__init__(
-            [
-                StartTimerCommand(self.__timer_context),
-                ShellCommand(
-                    'sudo ctr-starlight pull --profile myproxy cloud.cluster.local/%s' % image),
-                ShellCommand(container_creation_cmd),
-                ShellCommand('sudo ctr task start instance',
-                             wait_for, [PrintTimerCommand(self.__timer_context), ShellCommand('sudo ctr task kill instance')]),
-                SleepCommand(5),
-                ShellCommand('sudo ctr container rm instance')
-            ]
-        )
-
-    def run(self):
-        for src, _ in self.__mounts:
-            os.makedirs(src, exist_ok=True)
-        return super().run()
-
-
-SERVICES: dict[str, Service] = {
-    'redis': StarlightService(
-        'redis:6.2.1-starlight',
-        '/usr/local/bin/redis-server',
-        'Ready to accept connections',
-        dict(),
-        [('/tmp/test-redis-data', '/data')]
-    )
-}
-
-
-def main():
-    parser = argparse.ArgumentParser(
-        description='Start up time benchmark tool for Starlight')
-    parser.add_argument('service', type=str)
-    args = parser.parse_args()
-
-    service_name = args.service
-    if service_name not in SERVICES:
-        print('No service named \'%s\'' % service_name)
-        exit(1)
-
-    exit(SERVICES[service_name].run())
-
-
-if __name__ == '__main__':
-    main()
