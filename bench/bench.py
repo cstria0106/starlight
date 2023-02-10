@@ -43,6 +43,16 @@ class PrintTimerCommand(Command):
               (self.context.name, now - self.context.start_time))
 
 
+class SleepCommand(Command):
+    __amount: float
+
+    def __init__(self, amount: float) -> None:
+        self.__amount = amount
+
+    def execute(self) -> int:
+        time.sleep(self.__amount)
+
+
 class ShellCommand(Command):
     cmd: str
     wait_for: str | None
@@ -129,7 +139,7 @@ class StarlightService(Service):
                     'sudo ctr-starlight pull --profile myproxy cloud.cluster.local/%s' % image),
                 ShellCommand(container_creation_cmd),
                 ShellCommand('sudo ctr task start instance',
-                             wait_for, [PrintTimerCommand(self.__timer_context), ShellCommand('sudo ctr task kill instance')]),
+                             wait_for, [PrintTimerCommand(self.__timer_context), ShellCommand('sudo ctr task kill instance'), SleepCommand(5)]),
                 ShellCommand('sudo ctr container rm instance')
             ]
         )
