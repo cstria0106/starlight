@@ -8,7 +8,7 @@ from .bench import Service, SleepCommand, StartTimerCommand, PrintTimerCommand, 
 class _StarlightService(Service):
     __mounts: Iterable[Tuple[str, str]]
 
-    def __init__(self, profile: str, image: str, cmd: str, wait_for: str, env: dict[str, str], mounts: Iterable[Tuple[str, str]]) -> None:
+    def __init__(self, proxy: str, image: str, cmd: str, wait_for: str, env: dict[str, str], mounts: Iterable[Tuple[str, str]]) -> None:
         container_creation_args = ''
 
         for key, value in env.items():
@@ -30,7 +30,7 @@ class _StarlightService(Service):
             [
                 StartTimerCommand(timer_context),
                 ShellCommand(
-                    'sudo ctr-starlight pull --profile %s %s' % (profile, image)),
+                    'sudo ctr-starlight pull --profile %s %s' % (proxy, image)),
                 ShellCommand(container_creation_cmd),
                 ShellCommand('sudo ctr task start instance',
                              wait_for, [PrintTimerCommand(timer_context), ShellCommand('sudo ctr task kill instance')]),
@@ -59,8 +59,8 @@ class __StarlightServiceBuilder:
         self.env = env
         self.mounts = mounts
 
-    def build(self, profile: str) -> _StarlightService:
-        return _StarlightService(profile, self.image, self.cmd, self.wait_for, self.env, self.mounts)
+    def build(self, proxy: str) -> _StarlightService:
+        return _StarlightService(proxy, self.image, self.cmd, self.wait_for, self.env, self.mounts)
 
 
 __SERVICE_BUILDERS: dict[str, __StarlightServiceBuilder] = {
@@ -76,23 +76,23 @@ __SERVICE_BUILDERS: dict[str, __StarlightServiceBuilder] = {
 
 class Arguments:
     service: str
-    profile: str
+    proxy: str
 
 
 def run(args: Arguments):
-    service_name, profile_name = args.service, args.profile
+    service_name, proxy_name = args.service, args.proxy
 
     if service_name not in __SERVICE_BUILDERS:
         print('No service named \'%s\'' % service_name)
         exit(1)
 
-    exit(__SERVICE_BUILDERS[service_name].build(profile_name).run())
+    exit(__SERVICE_BUILDERS[service_name].build(proxy_name).run())
 
 
 def init_argument_parser(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
     parser.description = 'Check start up time of Starlight container'
     parser.add_argument('service', type=str)
-    parser.add_argument('--profile', type=str, default='myprofile')
+    parser.add_argument('--proxy', type=str, default='myproxy')
     return parser
 
 
