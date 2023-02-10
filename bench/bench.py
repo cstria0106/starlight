@@ -92,7 +92,7 @@ class ShellCommand(Command):
 
         if returncode != 0:
             raise Exception(
-                'shell command \'%s\' returned code %d', self.cmd, returncode)
+                'shell command \'%s\' returned code %d' % (self.cmd, returncode))
 
 
 class Service:
