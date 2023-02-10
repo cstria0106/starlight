@@ -104,7 +104,7 @@ class Service:
 
     def run(self) -> int:
         for command in self.__commands:
-            returncode = command.execute()
+            command.execute()
 
         return 0
 
@@ -141,7 +141,8 @@ class StarlightService(Service):
                     'sudo ctr-starlight pull --profile myproxy cloud.cluster.local/%s' % image),
                 ShellCommand(container_creation_cmd),
                 ShellCommand('sudo ctr task start instance',
-                             wait_for, [PrintTimerCommand(self.__timer_context), ShellCommand('sudo ctr task kill instance'), SleepCommand(5)]),
+                             wait_for, [PrintTimerCommand(self.__timer_context), ShellCommand('sudo ctr task kill instance')]),
+                SleepCommand(5),
                 ShellCommand('sudo ctr container rm instance')
             ]
         )
