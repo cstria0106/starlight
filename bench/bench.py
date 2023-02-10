@@ -6,7 +6,7 @@ from collections.abc import Iterable
 
 
 class Command:
-    def execute(self) -> int:
+    def execute(self):
         raise NotImplementedError()
 
 
@@ -26,7 +26,7 @@ class StartTimerCommand(Command):
         super().__init__()
         self.context = context
 
-    def execute(self) -> int:
+    def execute(self):
         self.context.start_time = time.time()
 
 
@@ -37,7 +37,7 @@ class PrintTimerCommand(Command):
         super().__init__()
         self.context = context
 
-    def execute(self) -> int:
+    def execute(self):
         now = time.time()
         print('[timer - %s] %.4fs' %
               (self.context.name, now - self.context.start_time))
@@ -49,7 +49,7 @@ class SleepCommand(Command):
     def __init__(self, amount: float) -> None:
         self.__amount = amount
 
-    def execute(self) -> int:
+    def execute(self):
         time.sleep(self.__amount)
 
 
@@ -64,13 +64,14 @@ class ShellCommand(Command):
         self.cleanup_commands = cleanup_commands
         assert ((self.wait_for is None) == (self.cleanup_commands is None))
 
-    def execute(self) -> int:
+    def execute(self):
         print('[run] %s' % self.cmd)
         if self.wait_for is not None:
             print('[wait for] %s' % self.wait_for)
         p = subprocess.Popen(
             self.cmd, shell=True, stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
 
+        returncode = None
         while True:
             returncode = p.poll()
             if returncode is not None:
@@ -87,22 +88,23 @@ class ShellCommand(Command):
                         cleanup_command.execute()
                     break
 
-        return p.wait()
+        if returncode is None:
+            returncode = p.wait()
+
+        if returncode != 0:
+            raise Exception(
+                'shell command \'%s\' returned code %d', self.cmd, returncode)
 
 
 class Service:
-    __commands: Iterable[ShellCommand]
+    __commands: Iterable[Command]
 
-    def __init__(self, commands: Iterable[ShellCommand]) -> None:
+    def __init__(self, commands: Iterable[Command]) -> None:
         self.__commands = commands
 
     def run(self) -> int:
         for command in self.__commands:
             returncode = command.execute()
-            if returncode != 0:
-                print('command \'%s\' has returned %d' %
-                      (command, returncode))
-                return returncode
 
         return 0
 
