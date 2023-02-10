@@ -101,7 +101,7 @@ class Service:
             returncode = command.execute()
             if returncode != 0:
                 print('command \'%s\' has returned %d' %
-                      (command.cmd, returncode))
+                      (command, returncode))
                 return returncode
 
         return 0
