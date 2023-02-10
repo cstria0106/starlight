@@ -10,7 +10,7 @@ class __ContainerdService(Service):
     __mounts: Iterable[Tuple[str, str]]
 
     def __init__(self, image: str, cmd: str, wait_for: str, env: dict[str, str], mounts: Iterable[Tuple[str, str]]) -> None:
-        start_args = ''
+        start_args = '--name instance '
 
         for key, value in env.items():
             start_args += '--env %s=%s ' % (key, value)
@@ -19,13 +19,13 @@ class __ContainerdService(Service):
         for src, dst in mounts:
             start_args += '--mount type=bind,source=%s,target=%s' % (src, dst)
 
-        start_command = 'nerdctl run %s %s %s' % (start_args, image, cmd)
+        start_command = 'sudo nerdctl run %s %s %s' % (start_args, image, cmd)
 
         timer_context = TimerContext('containerd')
         super().__init__((
             StartTimerCommand(timer_context),
             ShellCommand(start_command, wait_for,
-                         (PrintTimerCommand(timer_context), ShellCommand('')))
+                         (PrintTimerCommand(timer_context), ShellCommand('sudo nerdctl container kill instance')))
         ))
 
     def run(self):
