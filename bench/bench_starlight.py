@@ -21,11 +21,8 @@ class _StarlightService(Service):
 
         container_creation_args += '--net-host'
 
-        container_creation_cmd = 'sudo ctr containers create \
-                                    --snapshotter=starlight \
-                                    %s \
-                                    %s \
-                                    instance %s' % (container_creation_args, image, cmd)
+        container_creation_cmd = 'sudo ctr containers create --snapshotter=starlight %s %s instance %s' % (
+            container_creation_args, image, cmd)
 
         timer_context = TimerContext('starlight')
 
