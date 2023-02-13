@@ -9,9 +9,9 @@ def plot(x: list[int], y: list[list[float]], output: str):
     assert len(x) > 0, 'empty data'
     assert len(x) == len(y), 'invalid data'
 
-
     plt.plot(x, [i[0] for i in y])
-    
+    plt.savefig(output)
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(prog='plot', description='plot tool')
