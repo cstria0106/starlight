@@ -36,7 +36,7 @@ class TimerContext:
               (self.name, elapsed))
 
         if self.file is not None:
-            self.file.write('%f,%f', self.start_time, elapsed)
+            self.file.write('%f,%f' % (self.start_time, elapsed))
 
     def stop(self):
         if self.file is not None:
