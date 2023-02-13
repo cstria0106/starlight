@@ -1,5 +1,6 @@
 import argparse
 from io import TextIOWrapper
+import os
 import subprocess
 import time
 from collections.abc import Iterable
@@ -25,6 +26,7 @@ class TimerContext:
     def start(self):
         self.start_time = time.time()
         if self.output_dir is not None:
+            os.makedirs(self.output_dir, exist_ok=True)
             self.file = open(
                 join_path(self.output_dir,
                           'timer-%s-%d' % (self.name, int(self.start_time))), 'w')
