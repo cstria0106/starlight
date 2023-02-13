@@ -47,7 +47,7 @@ if __name__ == '__main__':
                     temp_y.append(elapsed)
                 else:
                     y.append(temp_y)
-                    temp_y.clear()
+                    temp_y = []
                     x.append(start_time)
                     temp_y.append(elapsed)
         y.append(temp_y)
