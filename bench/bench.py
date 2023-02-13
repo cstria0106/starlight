@@ -4,7 +4,7 @@ import os
 import subprocess
 import time
 from collections.abc import Iterable
-from os.path import join as join_path
+from os.path import join as join_path, dirname
 
 
 class Command:
@@ -15,21 +15,19 @@ class Command:
 class TimerContext:
     name: str
     start_time: float | None
-    output_dir: str | None
+    output: str | None
     file: TextIOWrapper | None
 
-    def __init__(self, name: str, output_dir: str | None = None) -> None:
+    def __init__(self, name: str, output: str | None = None) -> None:
         self.name = name
         self.start_time = None
-        self.output_dir = output_dir
+        self.output = output
 
     def start(self):
         self.start_time = time.time()
-        if self.output_dir is not None:
-            os.makedirs(self.output_dir, exist_ok=True)
-            self.file = open(
-                join_path(self.output_dir,
-                          '%s-%d' % (self.name, int(self.start_time * 1000))), 'w')
+        if self.output is not None:
+            os.makedirs(dirname(self.output), exist_ok=True)
+            self.file = open(self.output, 'a')
         else:
             self.file = None
 

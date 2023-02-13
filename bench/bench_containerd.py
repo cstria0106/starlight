@@ -9,7 +9,7 @@ from .bench import Service, ShellCommand, StartTimerCommand, StopTimerCommand, T
 class _ContainerdService(Service):
     __mounts: Iterable[Tuple[str, str]]
 
-    def __init__(self, image: str, cmd: str, wait_for: str, env: dict[str, str], mounts: Iterable[Tuple[str, str]], output_dir: str | None) -> None:
+    def __init__(self, image: str, cmd: str, wait_for: str, env: dict[str, str], mounts: Iterable[Tuple[str, str]], output: str | None) -> None:
         start_args = '--insecure-registry --name instance '
 
         for key, value in env.items():
@@ -21,7 +21,7 @@ class _ContainerdService(Service):
 
         start_command = 'sudo nerdctl run %s %s %s' % (start_args, image, cmd)
 
-        timer_context = TimerContext('containerd', output_dir=output_dir)
+        timer_context = TimerContext('containerd', output=output)
 
         super().__init__((
             StartTimerCommand(timer_context),
@@ -51,8 +51,8 @@ class __ContainerdServiceBuilder:
         self.env = env
         self.mounts = mounts
 
-    def build(self, output_dir_name: str | None) -> _ContainerdService:
-        return _ContainerdService(self.image, self.cmd, self.wait_for, self.env, self.mounts, output_dir=output_dir_name)
+    def build(self, output_name: str | None) -> _ContainerdService:
+        return _ContainerdService(self.image, self.cmd, self.wait_for, self.env, self.mounts, output=output_name)
 
 
 __SERVICE_BUILDERS: dict[str, __ContainerdServiceBuilder] = {
@@ -68,24 +68,24 @@ __SERVICE_BUILDERS: dict[str, __ContainerdServiceBuilder] = {
 
 class Arguments:
     service: str
-    output_dir: str
+    output: str
 
 
 def run(args: Arguments):
-    service_name, output_dir_name = args.service, args.output_dir
+    service_name, output_name = args.service, args.output
 
     if service_name not in __SERVICE_BUILDERS:
         print('No service named \'%s\'' % service_name)
         exit(1)
 
-    exit(__SERVICE_BUILDERS[service_name].build(output_dir_name).run())
+    exit(__SERVICE_BUILDERS[service_name].build(output_name).run())
 
 
 def init_argument_parser(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
     parser.description = 'Check start up time of Containerd container using Nerdctl'
     parser.add_argument('service', type=str, help='service name')
     parser.add_argument('-o', type=str,
-                        dest='output_dir', help='path of timer output directory', default=None)
+                        dest='output', help='path of timer output directory', default=None)
     return parser
 
 
