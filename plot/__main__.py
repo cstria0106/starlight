@@ -11,7 +11,7 @@ def plot(x: list[int], y: list[list[float]], output: str):
 
 
     plt.plot(x, [i[0] for i in y])
-
+    
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(prog='plot', description='plot tool')
