@@ -26,7 +26,9 @@ class TimerContext:
     def start(self):
         self.start_time = time.time()
         if self.output is not None:
-            os.makedirs(dirname(self.output), exist_ok=True)
+            dir = dirname(self.output)
+            if dir != '':
+                os.makedirs(dir, exist_ok=True)
             self.file = open(self.output, 'a')
         else:
             self.file = None
