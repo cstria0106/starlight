@@ -2,7 +2,7 @@ import argparse
 import os
 from typing import Iterable, Tuple
 
-from .bench import Service, SleepCommand, StartTimerCommand, MarkTimerContext, StopTimerCommand, TimerContext, ShellCommand
+from .bench import Service, SleepCommand, StartTimerCommand, MarkTimerCommand, StopTimerCommand, TimerContext, ShellCommand
 
 
 class _StarlightService(Service):
@@ -33,7 +33,7 @@ class _StarlightService(Service):
                     'sudo ctr-starlight pull --profile %s %s' % (proxy, image)),
                 ShellCommand(container_creation_cmd),
                 ShellCommand('sudo ctr task start instance',
-                             wait_for, [MarkTimerContext(timer_context), ShellCommand('sudo ctr task kill instance')]),
+                             wait_for, [MarkTimerCommand(timer_context), ShellCommand('sudo ctr task kill instance')]),
                 SleepCommand(5),
                 ShellCommand('sudo ctr container rm instance'),
                 StopTimerCommand(timer_context)

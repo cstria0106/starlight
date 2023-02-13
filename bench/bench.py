@@ -54,7 +54,7 @@ class StartTimerCommand(Command):
         self.context.start()
 
 
-class MarkTimerContext(Command):
+class MarkTimerCommand(Command):
     context: TimerContext
 
     def __init__(self, context: TimerContext) -> None:
