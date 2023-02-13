@@ -29,7 +29,7 @@ class TimerContext:
             os.makedirs(self.output_dir, exist_ok=True)
             self.file = open(
                 join_path(self.output_dir,
-                          'timer-%s-%d' % (self.name, int(self.start_time))), 'w')
+                          '%s-%d' % (self.name, int(self.start_time * 1000))), 'w')
         else:
             self.file = None
 
