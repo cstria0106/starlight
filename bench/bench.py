@@ -28,6 +28,8 @@ class TimerContext:
             self.file = open(
                 join_path(self.output_dir,
                           'timer-%s-%d' % (self.name, int(self.start_time))), 'w')
+        else:
+            self.file = None
 
     def elapsed(self):
         return time.time() - self.start_time
