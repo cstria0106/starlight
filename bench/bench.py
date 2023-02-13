@@ -1,4 +1,5 @@
 import argparse
+from io import TextIOWrapper
 import subprocess
 import time
 from collections.abc import Iterable
@@ -12,10 +13,34 @@ class Command:
 class TimerContext:
     name: str
     start_time: float | None
+    save_as_file: bool
+    file: TextIOWrapper | None
 
-    def __init__(self, name: str) -> None:
+    def __init__(self, name: str, save_as_file: bool = False) -> None:
         self.name = name
         self.start_time = None
+        self.save_as_file = save_as_file
+
+    def start(self):
+        self.start_time = time.time()
+        if self.save_as_file:
+            self.file = open('timer-%s-%d' %
+                             (self.name, int(self.start_time)), 'w')
+
+    def elapsed(self):
+        return time.time() - self.start_time
+
+    def mark(self):
+        elapsed = self.elapsed()
+        print('[timer - %s] %.4fs' %
+              (self.name, elapsed))
+
+        if self.file is not None:
+            self.file.write('%f,%f', self.start_time, elapsed)
+
+    def stop(self):
+        if self.file is not None:
+            self.file.close()
 
 
 class StartTimerCommand(Command):
@@ -26,10 +51,10 @@ class StartTimerCommand(Command):
         self.context = context
 
     def execute(self):
-        self.context.start_time = time.time()
+        self.context.start()
 
 
-class PrintTimerCommand(Command):
+class MarkTimerContext(Command):
     context: TimerContext
 
     def __init__(self, context: TimerContext) -> None:
@@ -37,9 +62,18 @@ class PrintTimerCommand(Command):
         self.context = context
 
     def execute(self):
-        now = time.time()
-        print('[timer - %s] %.4fs' %
-              (self.context.name, now - self.context.start_time))
+        self.context.mark()
+
+
+class StopTimerCommand(Command):
+    context: TimerContext
+
+    def __init__(self, context: TimerContext) -> None:
+        super().__init__()
+        self.context = context
+
+    def execute(self):
+        self.context.stop()
 
 
 class SleepCommand(Command):

@@ -3,7 +3,7 @@ import argparse
 import os
 from typing import Iterable, Tuple
 
-from .bench import PrintTimerCommand, Service, ShellCommand, StartTimerCommand, TimerContext
+from .bench import PrintTimerCommand, Service, ShellCommand, StartTimerCommand, StopTimerCommand, TimerContext
 
 
 class __ContainerdService(Service):
@@ -21,12 +21,13 @@ class __ContainerdService(Service):
 
         start_command = 'sudo nerdctl run %s %s %s' % (start_args, image, cmd)
 
-        timer_context = TimerContext('containerd')
+        timer_context = TimerContext('containerd', save_as_file=True)
         super().__init__((
             StartTimerCommand(timer_context),
             ShellCommand(start_command, wait_for,
                          (PrintTimerCommand(timer_context), ShellCommand('sudo nerdctl container kill -s INT instance'))),
             ShellCommand('sudo nerdctl container rm instance'),
+            StopTimerCommand()
         ))
 
     def run(self):
