@@ -27,7 +27,7 @@ class __ContainerdService(Service):
             ShellCommand(start_command, wait_for,
                          (MarkTimerCommand(timer_context), ShellCommand('sudo nerdctl container kill -s INT instance'))),
             ShellCommand('sudo nerdctl container rm instance'),
-            StopTimerCommand()
+            StopTimerCommand(timer_context)
         ))
 
     def run(self):
