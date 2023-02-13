@@ -34,7 +34,7 @@ if __name__ == '__main__':
             if len(split) != 2:
                 assert 'invalid data'
 
-            start_time = int(split[0])
+            start_time = int(float(split[0]) * 1000)
             elapsed = float(split[1])
 
             if len(x) == 0:
