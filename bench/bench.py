@@ -3,6 +3,7 @@ from io import TextIOWrapper
 import subprocess
 import time
 from collections.abc import Iterable
+from os.path import join as join_path
 
 
 class Command:
@@ -13,19 +14,20 @@ class Command:
 class TimerContext:
     name: str
     start_time: float | None
-    save_as_file: bool
+    output_dir: str | None
     file: TextIOWrapper | None
 
-    def __init__(self, name: str, save_as_file: bool = False) -> None:
+    def __init__(self, name: str, output_dir: str | None = None) -> None:
         self.name = name
         self.start_time = None
-        self.save_as_file = save_as_file
+        self.output_dir = output_dir
 
     def start(self):
         self.start_time = time.time()
-        if self.save_as_file:
-            self.file = open('timer-%s-%d' %
-                             (self.name, int(self.start_time)), 'w')
+        if self.output_dir is not None:
+            self.file = open(
+                join_path(self.output_dir,
+                          'timer-%s-%d' % (self.name, int(self.start_time))), 'w')
 
     def elapsed(self):
         return time.time() - self.start_time
