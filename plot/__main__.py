@@ -26,28 +26,20 @@ if __name__ == '__main__':
 
     x: list[int] = []
     y: list[list[float]] = []
-    temp_y: list[float] = []
     with open(args.file, 'r') as file:
         lines = file.readlines()
         for line in lines:
             split = line.split(',')
-            if len(split) != 2:
+            if len(split) != 3:
                 assert 'invalid data'
 
-            start_time = int(float(split[0]) * 1000)
-            elapsed = float(split[1])
+            index = int(split[0])
+            start_time = int(float(split[1]) * 1000)
+            elapsed = float(split[2])
 
-            if len(x) == 0:
-                x.append(start_time)
-                temp_y.append(elapsed)
-            else:
-                if x[-1] == start_time:
-                    temp_y.append(elapsed)
-                else:
-                    y.append(temp_y)
-                    temp_y = []
-                    x.append(start_time)
-                    temp_y.append(elapsed)
-        y.append(temp_y)
+            if index > len(y):
+                y.extend([[] for _ in range(index - len(y) - 1)])
+
+            y[index].append(elapsed)
 
     plot(x, y, args.output)
