@@ -38,7 +38,9 @@ if __name__ == '__main__':
             elapsed = float(split[2])
 
             if index >= len(y):
+                print(y)
                 y.extend([[] for _ in range(index - len(y) + 1)])
+                print(y)
 
             y[index].append(elapsed)
 
