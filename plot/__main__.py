@@ -10,7 +10,7 @@ def plot(data: list[list[float]], output: str):
     assert len([i for i in data if len(i) == 0]) == 0, 'invalid data'
 
     plt.fill_between(list(range(len(data))),
-                     [min(i) for i in data], [max(i) for i in data])
+                     [min(i) for i in data], [max(i) for i in data], alpha=0.2)
     plt.savefig(output)
 
 
