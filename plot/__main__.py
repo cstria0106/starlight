@@ -37,7 +37,7 @@ if __name__ == '__main__':
             start_time = int(float(split[1]) * 1000)
             elapsed = float(split[2])
 
-            if index > len(y):
+            if index >= len(y):
                 y.extend([[] for _ in range(index - len(y) + 1)])
 
             y[index].append(elapsed)
