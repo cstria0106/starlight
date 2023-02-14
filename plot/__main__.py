@@ -39,7 +39,7 @@ if __name__ == '__main__':
 
             if index >= len(y):
                 print(y)
-                y.extend([[] for _ in range(index - len(y) + 1)])
+                y.extend([[] for _ in range(index - len(y))])
                 print(y)
 
             y[index].append(elapsed)
