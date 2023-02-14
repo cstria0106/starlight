@@ -3,15 +3,15 @@ from matplotlib import pyplot as plt
 import argparse
 import os
 import os.path
+import numpy as np
+import seaborn as sns
 
 
 def plot(data: list[list[float]], output: str):
     assert len(data) > 0, 'empty data'
     assert len([i for i in data if len(i) == 0]) == 0, 'invalid data'
     x = list(range(len(data)))
-    plt.plot(x, [sum(i) / len(i) for i in data])
-    plt.fill_between(x,
-                     [min(i) for i in data], [max(i) for i in data], alpha=0.2)
+    sns.relplot(x, data)
     plt.savefig(output)
 
 
