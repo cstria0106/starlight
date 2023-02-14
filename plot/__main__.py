@@ -11,7 +11,7 @@ def plot(data: list[list[float]], output: str):
     assert len(data) > 0, 'empty data'
     assert len([i for i in data if len(i) == 0]) == 0, 'invalid data'
     x = list(range(len(data)))
-    sns.lineplot(x, data)
+    sns.lineplot(x=x, y=data)
     plt.savefig(output)
 
 
