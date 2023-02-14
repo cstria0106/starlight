@@ -5,11 +5,10 @@ import os
 import os.path
 
 
-def plot(x: list[int], y: list[list[float]], output: str):
-    assert len(x) > 0, 'empty data'
-    assert len(x) == len(y), 'invalid data'
+def plot(data: list[list[float]], output: str):
+    assert len(data) > 0, 'empty data'
 
-    plt.scatter(list(range(len(x))), [i[0] for i in y])
+    plt.scatter(list(range(len(data))), [i[0] for i in data])
     plt.savefig(output)
 
 
@@ -24,8 +23,7 @@ if __name__ == '__main__':
     if dir != '':
         os.makedirs(dir, exist_ok=True)
 
-    x: list[int] = []
-    y: list[list[float]] = []
+    data: list[list[float]] = []
     with open(args.file, 'r') as file:
         lines = file.readlines()
         for line in lines:
@@ -37,10 +35,9 @@ if __name__ == '__main__':
             start_time = int(float(split[1]) * 1000)
             elapsed = float(split[2])
 
-            if index >= len(y):
-                y.extend([[] for _ in range(index - len(y) + 1)])
+            if index >= len(data):
+                data.extend([[] for _ in range(index - len(data) + 1)])
 
-            y[index].append(elapsed)
-            print(y)
+            data[index].append(elapsed)
 
-    plot(x, y, args.output)
+    plot(x, data, args.output)
