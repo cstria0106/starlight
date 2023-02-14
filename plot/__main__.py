@@ -25,8 +25,8 @@ if __name__ == '__main__':
     if dir != '':
         os.makedirs(dir, exist_ok=True)
 
-    x: list[int]
-    y: list[float]
+    x: list[int] = []
+    y: list[float] = []
     with open(args.file, 'r') as file:
         lines = file.readlines()
         for line in lines:
