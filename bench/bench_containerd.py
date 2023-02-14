@@ -86,7 +86,7 @@ def init_argument_parser(parser: argparse.ArgumentParser) -> argparse.ArgumentPa
     parser.add_argument('service', type=str, help='service name')
     parser.add_argument('-o', type=str,
                         dest='output', help='path of timer output directory', default=None)
-    parser.add_argument('-i', type=str, dest='timer_index',
+    parser.add_argument('-i', type=int, dest='timer_index',
                         help='index of timer context', default=0)
     return parser
 
