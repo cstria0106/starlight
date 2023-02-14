@@ -34,7 +34,6 @@ class _StarlightService(Service):
                 ShellCommand(container_creation_cmd),
                 ShellCommand('sudo ctr task start instance',
                              wait_for, [MarkTimerCommand(timer_context), ShellCommand('sudo ctr task kill instance')]),
-                SleepCommand(5),
                 ShellCommand('sudo ctr container rm instance'),
                 StopTimerCommand(timer_context)
             ]
