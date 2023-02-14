@@ -7,11 +7,10 @@ import numpy as np
 import seaborn as sns
 
 
-def plot(data: list[list[float]], output: str):
-    assert len(data) > 0, 'empty data'
-    assert len([i for i in data if len(i) == 0]) == 0, 'invalid data'
-    x = list(range(len(data)))
-    sns.lineplot(x=x, y=data)
+def plot(x: list[int], y: list[float], output: str):
+    assert len(x) > 0 and len(y) > 0, 'empty data'
+    assert len(x) == len(y), 'invalid data'
+    sns.lineplot(x=x, y=y)
     plt.savefig(output)
 
 
@@ -26,7 +25,8 @@ if __name__ == '__main__':
     if dir != '':
         os.makedirs(dir, exist_ok=True)
 
-    data: list[list[float]] = []
+    x: list[int]
+    y: list[float]
     with open(args.file, 'r') as file:
         lines = file.readlines()
         for line in lines:
@@ -38,9 +38,7 @@ if __name__ == '__main__':
             start_time = int(float(split[1]) * 1000)
             elapsed = float(split[2])
 
-            if index >= len(data):
-                data.extend([[] for _ in range(index - len(data) + 1)])
+            x.append(index)
+            y.append(elapsed)
 
-            data[index].append(elapsed)
-
-    plot(data, args.output)
+    plot(x, y, args.output)
