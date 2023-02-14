@@ -7,8 +7,10 @@ import os.path
 
 def plot(data: list[list[float]], output: str):
     assert len(data) > 0, 'empty data'
+    assert len([i for i in data if len(i) == 0]) == 0, 'invalid data'
 
-    plt.scatter(list(range(len(data))), [i[0] for i in data])
+    plt.fill_between(list(range(len(data))),
+                     [min(i) for i in data], [max(i) for i in data])
     plt.savefig(output)
 
 
