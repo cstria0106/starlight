@@ -40,4 +40,4 @@ if __name__ == '__main__':
 
             data[index].append(elapsed)
 
-    plot(x, data, args.output)
+    plot(data, args.output)
