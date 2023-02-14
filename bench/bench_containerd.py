@@ -9,7 +9,7 @@ from .bench import Service, ShellCommand, StartTimerCommand, StopTimerCommand, T
 class _ContainerdService(Service):
     __mounts: Iterable[Tuple[str, str]]
 
-    def __init__(self, image: str, cmd: str, wait_for: str, env: dict[str, str], mounts: Iterable[Tuple[str, str]], output: str | None) -> None:
+    def __init__(self, image: str, cmd: str, wait_for: str, env: dict[str, str], mounts: Iterable[Tuple[str, str]], timer_index: int, output: str | None) -> None:
         start_args = '--insecure-registry --name instance '
 
         for key, value in env.items():
@@ -21,7 +21,7 @@ class _ContainerdService(Service):
 
         start_command = 'sudo nerdctl run %s %s %s' % (start_args, image, cmd)
 
-        timer_context = TimerContext('containerd', output=output)
+        timer_context = TimerContext(timer_index, output=output)
 
         super().__init__((
             StartTimerCommand(timer_context),
@@ -51,8 +51,8 @@ class __ContainerdServiceBuilder:
         self.env = env
         self.mounts = mounts
 
-    def build(self, output_name: str | None) -> _ContainerdService:
-        return _ContainerdService(self.image, self.cmd, self.wait_for, self.env, self.mounts, output=output_name)
+    def build(self, timer_index: int, output_name: str | None) -> _ContainerdService:
+        return _ContainerdService(self.image, self.cmd, self.wait_for, self.env, self.mounts, timer_index, output=output_name)
 
 
 __SERVICE_BUILDERS: dict[str, __ContainerdServiceBuilder] = {
@@ -68,17 +68,17 @@ __SERVICE_BUILDERS: dict[str, __ContainerdServiceBuilder] = {
 
 class Arguments:
     service: str
+    timer_index: int
     output: str
 
 
 def run(args: Arguments):
-    service_name, output_name = args.service, args.output
-
-    if service_name not in __SERVICE_BUILDERS:
-        print('No service named \'%s\'' % service_name)
+    if args.service not in __SERVICE_BUILDERS:
+        print('No service named \'%s\'' % args.service)
         exit(1)
 
-    exit(__SERVICE_BUILDERS[service_name].build(output_name).run())
+    exit(__SERVICE_BUILDERS[args.service].build(
+        args.timer_index, args.output).run())
 
 
 def init_argument_parser(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
@@ -86,6 +86,8 @@ def init_argument_parser(parser: argparse.ArgumentParser) -> argparse.ArgumentPa
     parser.add_argument('service', type=str, help='service name')
     parser.add_argument('-o', type=str,
                         dest='output', help='path of timer output directory', default=None)
+    parser.add_argument('-i', type=str, dest='timer_index',
+                        help='index of timer context')
     return parser
 
 

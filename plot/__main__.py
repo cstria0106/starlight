@@ -10,8 +10,6 @@ def plot(x: list[int], y: list[list[float]], output: str):
     assert len(x) == len(y), 'invalid data'
 
     plt.scatter(list(range(len(x))), [i[0] for i in y])
-    print(x)
-    print(y)
     plt.savefig(output)
 
 

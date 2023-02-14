@@ -8,7 +8,7 @@ from .bench import Service, SleepCommand, StartTimerCommand, MarkTimerCommand, S
 class _StarlightService(Service):
     __mounts: Iterable[Tuple[str, str]]
 
-    def __init__(self, proxy: str, image: str, cmd: str, wait_for: str, env: dict[str, str], mounts: Iterable[Tuple[str, str]], output: None) -> None:
+    def __init__(self, proxy: str, image: str, cmd: str, wait_for: str, env: dict[str, str], mounts: Iterable[Tuple[str, str]], timer_index: int, output: str | None) -> None:
         container_creation_args = ''
 
         for key, value in env.items():
@@ -24,7 +24,7 @@ class _StarlightService(Service):
         container_creation_cmd = 'sudo ctr containers create --snapshotter=starlight %s %s instance %s' % (
             container_creation_args, image, cmd)
 
-        timer_context = TimerContext('starlight', output=output)
+        timer_context = TimerContext(timer_index, output=output)
 
         super().__init__(
             [
@@ -60,8 +60,8 @@ class __StarlightServiceBuilder:
         self.env = env
         self.mounts = mounts
 
-    def build(self, proxy: str, output_name: str | None) -> _StarlightService:
-        return _StarlightService(proxy, self.image, self.cmd, self.wait_for, self.env, self.mounts, output=output_name)
+    def build(self, proxy: str, timer_index: int, output_name: str | None) -> _StarlightService:
+        return _StarlightService(proxy, self.image, self.cmd, self.wait_for, self.env, self.mounts, timer_index, output=output_name)
 
 
 __SERVICE_BUILDERS: dict[str, __StarlightServiceBuilder] = {
@@ -78,18 +78,17 @@ __SERVICE_BUILDERS: dict[str, __StarlightServiceBuilder] = {
 class Arguments:
     service: str
     proxy: str
+    timer_index: int
     output: str | None
 
 
 def run(args: Arguments):
-    service_name, proxy_name, output_name = args.service, args.proxy, args.output
-
-    if service_name not in __SERVICE_BUILDERS:
-        print('No service named \'%s\'' % service_name)
+    if args.service not in __SERVICE_BUILDERS:
+        print('No service named \'%s\'' % args.service)
         exit(1)
 
-    exit(__SERVICE_BUILDERS[service_name].build(
-        proxy_name, output_name).run())
+    exit(__SERVICE_BUILDERS[args.service].build(
+        args.proxy, args.timer_index, args.output).run())
 
 
 def init_argument_parser(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
@@ -99,6 +98,8 @@ def init_argument_parser(parser: argparse.ArgumentParser) -> argparse.ArgumentPa
                         help='starlight proxy profile name')
     parser.add_argument('-o', type=str,
                         dest='output', help='path of timer output directory', default=None)
+    parser.add_argument('-i', type=int, dest='timer_index',
+                        help='index of timer context')
     return parser
 
 

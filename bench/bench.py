@@ -13,13 +13,13 @@ class Command:
 
 
 class TimerContext:
-    name: str
+    id: int
     start_time: float | None
     output: str | None
     file: TextIOWrapper | None
 
-    def __init__(self, name: str, output: str | None = None) -> None:
-        self.name = name
+    def __init__(self, id: int, output: str | None = None) -> None:
+        self.id = id
         self.start_time = None
         self.output = output
 
@@ -39,10 +39,10 @@ class TimerContext:
     def mark(self):
         elapsed = self.elapsed()
         print('[timer - %s] %.4fs' %
-              (self.name, elapsed))
+              (self.id, elapsed))
 
         if self.file is not None:
-            self.file.write('%f,%f\n' % (self.start_time, elapsed))
+            self.file.write('%d,%f,%f\n' % (self.id, self.start_time, elapsed))
 
     def stop(self):
         if self.file is not None:
