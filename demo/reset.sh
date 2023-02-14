@@ -9,7 +9,7 @@ STARLIGHT_SNAPSHOTTER_ROOT=/var/lib/starlight/
 systemctl disable --now containerd
 # systemctl disable --now containerd starlight
 pkill -9 'containerd' | true
-pkill -9 'starlight' | true
+# pkill -9 'starlight' | true
 
 
 # Clear containerd folder
